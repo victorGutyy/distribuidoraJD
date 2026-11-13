@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
-// PÁGINA TEMPORAL DE F0: comprueba que .env.local está bien configurado y que
-// Supabase responde. Se elimina antes de publicar. Nunca muestra valores de claves.
+// PÁGINA TEMPORAL (F0/F1): comprueba que .env.local está bien configurado, que
+// Supabase responde y que RLS y la service_role funcionan desde la aplicación.
+// Se elimina antes de publicar. Nunca muestra valores de claves ni datos.
 export const metadata: Metadata = {
   title: "Estado de la conexión",
   robots: { index: false, follow: false },
@@ -38,6 +41,61 @@ async function probarSupabase(): Promise<Resultado> {
   }
 }
 
+// F1: con la clave pública, RLS solo deja leer lo público. La configuración
+// pública tiene 9 claves y los pedidos NO deben poder leerse.
+async function probarRls(): Promise<Resultado> {
+  try {
+    const supabase = await createClient();
+    const config = await supabase
+      .from("configuracion")
+      .select("clave", { count: "exact", head: true });
+    const pedidos = await supabase
+      .from("pedidos")
+      .select("id", { count: "exact", head: true });
+    if (config.error) {
+      return {
+        ok: false,
+        detalle: `Falló la lectura pública: ${config.error.message}`,
+      };
+    }
+    // Sin sesión, 'pedidos' debe rechazarse (error de permiso), nunca devolver filas.
+    const pedidosBloqueados = Boolean(pedidos.error);
+    return {
+      ok: (config.count ?? 0) > 0 && pedidosBloqueados,
+      detalle: `Config pública legible: ${config.count ?? 0} claves. Pedidos ${
+        pedidosBloqueados
+          ? "bloqueados al público (correcto)"
+          : "¡LEGIBLES! Revisa RLS"
+      }.`,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      detalle: e instanceof Error ? e.message : "Error desconocido.",
+    };
+  }
+}
+
+// F1: la service_role (solo servidor) omite RLS; debe poder contar los perfiles.
+async function probarServiceRole(): Promise<Resultado> {
+  try {
+    const admin = createAdminClient();
+    const { count, error } = await admin
+      .from("perfiles")
+      .select("id", { count: "exact", head: true });
+    if (error) return { ok: false, detalle: `Falló: ${error.message}` };
+    return {
+      ok: (count ?? 0) > 0,
+      detalle: `La service_role lee perfiles: ${count}.`,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      detalle: e instanceof Error ? e.message : "Error desconocido.",
+    };
+  }
+}
+
 function Fila({ ok, titulo, detalle }: Resultado & { titulo: string }) {
   return (
     <li className="flex gap-3 rounded-lg border p-4">
@@ -60,6 +118,8 @@ async function ListaEstado() {
   const tieneAnon = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const tieneServicio = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const conexion = await probarSupabase();
+  const rls = await probarRls();
+  const servicio = await probarServiceRole();
 
   return (
     <ul className="space-y-3">
@@ -81,6 +141,8 @@ async function ListaEstado() {
         }
       />
       <Fila {...conexion} titulo="Conexión con Supabase" />
+      <Fila {...rls} titulo="RLS con la clave pública (F1)" />
+      <Fila {...servicio} titulo="Cliente de servidor con service_role (F1)" />
     </ul>
   );
 }

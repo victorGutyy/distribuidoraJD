@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
 import { getSupabasePublicEnv, getSupabaseServiceRoleKey } from "./env";
 
 /**
@@ -20,7 +21,7 @@ export function createAdminClient() {
   }
 
   const { url } = getSupabasePublicEnv();
-  return createSupabaseClient(url, getSupabaseServiceRoleKey(), {
+  return createSupabaseClient<Database>(url, getSupabaseServiceRoleKey(), {
     // En el servidor no hay sesión que guardar ni refrescar.
     auth: { persistSession: false, autoRefreshToken: false },
   });

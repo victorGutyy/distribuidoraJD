@@ -12,3 +12,6 @@ scripts
 CLAUDE.md
 AGENTS.md
 README.md
+
+# Archivo generado por Supabase: no se reformatea (se regenera tras cada migración)
+src/types/database.types.ts
