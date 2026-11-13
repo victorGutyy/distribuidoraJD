@@ -1,9 +1,9 @@
-# CLAUDE.md — Plataforma Catálogo Distribuidora JD
+# CLAUDE.md — Plataforma Catálogo EV Distribuidora
 
 Este archivo le da a Claude Code el contexto y las reglas del proyecto. Léelo completo al iniciar cada sesión.
 
 ## 1. Proyecto en una línea
-Catálogo web con panel administrativo para **Distribuidora JD** (Quindío, Colombia): unas 1.700 referencias de víveres, útiles escolares, aseo, cuidado personal, farmacia básica y más. Los pedidos se envían por **WhatsApp** y se pagan **contraentrega**. El referente es la tienda de cempac.co/store.
+Catálogo web con panel administrativo para **EV Distribuidora** (Quindío, Colombia): unas 1.700 referencias de víveres, útiles escolares, aseo, cuidado personal, farmacia básica y más. Los pedidos se envían por **WhatsApp** y se pagan **contraentrega**. El referente es la tienda de cempac.co/store.
 
 **Lee siempre antes de cambiar algo importante:**
 - `docs/00_DOCUMENTO_MADRE.md`: visión, alcance y decisiones
@@ -90,8 +90,8 @@ Catálogo web con panel administrativo para **Distribuidora JD** (Quindío, Colo
 - Extensiones: `unaccent` y `pg_trgm` para la búsqueda (RF-04).
 
 ## 8. Identidad visual
-- Colores del logo: **negro** `#111111`, **amarillo** `#FEE600` (medido del logo real; confirmar con el vectorial) y **gris** `#9CA3AF` (el logo usa `#B0B4B9`; el gris de la interfaz es más oscuro para cumplir contraste AA). Logo en `public/logo-jd.webp`; original en `docs/marca/`.
-- Amarillo para las acciones principales y el precio por mayor; rojo `#E53935` solo para la etiqueta "Oferta"; fondo claro.
+- Marca: **EV Distribuidora**. Colores medidos del logo real (confirmar con el vectorial): **negro** `#06080C`, **azul** `#015BC1`, **dorado/champagne** `#CEB394` y **plata** `#C0BBB4`. Tokens en `globals.css`: `ev-negro`, `ev-azul`, `ev-dorado`, `ev-dorado-oscuro` (`#8A6D3B`, para dorado como *texto*), `ev-plata`, `ev-oferta`. Logo circular en `public/logo-ev.webp`; original en `docs/marca/logo-ev-original.webp`.
+- **Azul** para las acciones principales (texto blanco encima, 6,4:1); **dorado** para el precio por mayor y acentos (texto negro encima, 10:1; como texto sobre blanco usar `ev-dorado-oscuro`); negro y plata para la estructura; rojo `#E53935` solo para la etiqueta "Oferta"; fondo claro. El gris de la interfaz es más oscuro que la plata para cumplir contraste AA.
 - Tipografía sans legible (Inter o similar). Diseño **mobile-first**.
 
 ## 9. Comandos

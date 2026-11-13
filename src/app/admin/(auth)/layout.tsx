@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: LayoutProps<"/admin">) {
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-muted/40 px-4 py-10">
       <Logo priority className="w-28" sizes="112px" />
       <div className="w-full max-w-sm">{children}</div>
-      <p className="text-xs text-muted-foreground">Panel de Distribuidora JD</p>
+      <p className="text-xs text-muted-foreground">Panel de EV Distribuidora</p>
     </main>
   );
 }

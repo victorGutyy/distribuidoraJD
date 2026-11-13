@@ -1,4 +1,4 @@
-# Documento Madre — Plataforma Catálogo Distribuidora JD
+# Documento Madre — Plataforma Catálogo EV Distribuidora
 
 > Versión 1.0 · 8 de noviembre de 2026 · Responsable técnico: Víctor
 > Este documento es la **fuente de verdad** del proyecto: visión, alcance y decisiones. Los requerimientos detallados están en `01_REQUERIMIENTOS.md`.
@@ -7,20 +7,20 @@
 
 ## 1. Contexto del negocio
 
-**Distribuidora JD** es una distribuidora familiar del Quindío. Su portafolio incluye víveres y despensa, útiles escolares, aseo, cuidado personal, farmacia básica, fiesta, ferretería menor y artículos varios.
+**EV Distribuidora** es una distribuidora familiar del Quindío. Su portafolio incluye víveres y despensa, útiles escolares, aseo, cuidado personal, farmacia básica, fiesta, ferretería menor y artículos varios.
 
 Hoy trabajan así:
 - Tienen un **catálogo en PDF** (Word → PDF, 345 páginas, actualizado en julio de 2026) con unas **1.700 referencias** con foto, nombre, marca, presentación y unidad de venta. **No incluye precios.**
 - Sus **vendedores recorren el Quindío por días y por sectores**, toman pedidos y los reparten.
 - **Nunca han usado un sistema.** Todo es manual.
 
-**Objetivo:** pasar del catálogo en PDF a una **plataforma web** donde los clientes armen su pedido desde el celular, lo envíen por WhatsApp y paguen contraentrega. Distribuidora JD administrará productos, precios y pedidos desde un panel profesional.
+**Objetivo:** pasar del catálogo en PDF a una **plataforma web** donde los clientes armen su pedido desde el celular, lo envíen por WhatsApp y paguen contraentrega. EV Distribuidora administrará productos, precios y pedidos desde un panel profesional.
 
 ## 2. Referente: CEMPAC (cempac.co/store)
 
 El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Este es el análisis de qué se adopta y qué se mejora:
 
-| Característica de CEMPAC | Decisión para JD |
+| Característica de CEMPAC | Decisión para EV |
 |---|---|
 | Selector "Ubicación de pedido" que calcula la fecha estimada de entrega | **Adoptar y mejorar:** municipio + sector → día de reparto real de la ruta del vendedor |
 | Casilla "Recogeré el pedido en bodega" | **Adoptar** |
@@ -30,8 +30,8 @@ El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Est
 | Lista larga de categorías con casillas y nombres compuestos ("Audífonos-Calculadoras-USB-…") | **Mejorar:** categoría → subcategoría, más filtros por marca, presentación, precio, ofertas y disponibilidad |
 | Un producto distinto por cada tamaño | **Mejorar:** producto con **variantes / presentaciones** (SKU, contenido, unidad de venta y precios propios) |
 | Login obligatorio, solo negocios | **Cambiar en el MVP:** pedido **sin registro**, identificando al cliente por su teléfono |
-| Botón flotante de WhatsApp sin integración con el pedido | **Mejorar:** el pedido **se guarda con número** (JD-000123) y se abre WhatsApp con el resumen ya armado |
-| Más de 3.000 productos | JD tiene ~1.700, así que se necesitan buscador rápido, paginación e imágenes optimizadas |
+| Botón flotante de WhatsApp sin integración con el pedido | **Mejorar:** el pedido **se guarda con número** (EV-000123) y se abre WhatsApp con el resumen ya armado |
+| Más de 3.000 productos | EV tiene ~1.700, así que se necesitan buscador rápido, paginación e imágenes optimizadas |
 
 ## 3. Visión del producto
 
@@ -48,7 +48,7 @@ El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Est
 | Rol | Quién es | Qué hace |
 |---|---|---|
 | Cliente | Tendero, negocio u hogar | Navega, filtra, arma el carrito y envía el pedido por WhatsApp |
-| Administrador | Dueño de JD | Todo: productos, precios, pedidos, zonas, usuarios y configuración |
+| Administrador | Dueño de EV | Todo: productos, precios, pedidos, zonas, usuarios y configuración |
 | Editor | Familiar o empleado | Productos, imágenes y precios; no gestiona usuarios ni configuración |
 | Vendedor *(opcional en el MVP)* | Vendedor de ruta | Ve y actualiza el estado de los pedidos de sus sectores |
 
@@ -120,7 +120,7 @@ Las 33 secciones del PDF se agrupan en 7 categorías principales:
 > ⚠️ Antes de publicar la categoría **Farmacia**, hay que revisar si incluye productos que requieren registro INVIMA o condiciones especiales de venta.
 
 ### Identidad visual
-Logo de Distribuidora JD con **negro, amarillo y gris**: amarillo para acciones (botones y precios por mayor), negro y gris para la estructura. El logo se toma de la página 1 del PDF mientras el cliente entrega la versión vectorial.
+Logo de EV Distribuidora (círculo negro con aro dorado, "EV" en dorado y azul, caja y camión) con **negro, azul, dorado y plata**: azul para acciones (botones), dorado para el precio por mayor y acentos, negro y plata para la estructura. Los tonos exactos se midieron del archivo recibido (`docs/marca/logo-ev-original.webp`) y se confirmarán con la versión vectorial cuando el cliente la entregue.
 
 ## 8. Reglas de negocio clave
 

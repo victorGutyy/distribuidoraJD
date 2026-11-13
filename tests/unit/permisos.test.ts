@@ -88,7 +88,7 @@ describe("seccionDeRuta y puedeAccederARuta", () => {
     expect(puedeAccederARuta("admin", "/admin/usuarios")).toBe(true);
     expect(puedeAccederARuta("editor", "/admin/usuarios")).toBe(false);
     expect(puedeAccederARuta("vendedor", "/admin/precios/rapido")).toBe(false);
-    expect(puedeAccederARuta("vendedor", "/admin/pedidos/JD-000001")).toBe(
+    expect(puedeAccederARuta("vendedor", "/admin/pedidos/EV-000001")).toBe(
       true,
     );
   });

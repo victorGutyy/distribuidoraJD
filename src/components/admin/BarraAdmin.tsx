@@ -87,7 +87,7 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
           <span className="text-sm font-semibold leading-tight">
             Panel
             <br />
-            Distribuidora JD
+            EV Distribuidora
           </span>
         </div>
 
@@ -128,7 +128,7 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
                     className={cn(
                       base,
                       activo
-                        ? "bg-jd-amarillo text-jd-negro"
+                        ? "bg-primary text-primary-foreground"
                         : "text-foreground hover:bg-muted",
                     )}
                   >

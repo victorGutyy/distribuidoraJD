@@ -11,12 +11,14 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
 
-  /* Colores de marca Distribuidora JD (CLAUDE.md §8).
-     Se usan como bg-jd-amarillo, text-jd-negro, border-jd-gris, etc. */
-  --color-jd-negro: #111111;
-  --color-jd-amarillo: #fee600;
-  --color-jd-gris: #9ca3af; /* solo bordes/adornos: como texto no cumple contraste AA */
-  --color-jd-oferta: #e53935; /* exclusivo de la etiqueta "Oferta" */
+  /* Colores de marca EV Distribuidora, medidos del logo (CLAUDE.md §8).
+     Se usan como bg-ev-azul, text-ev-negro, border-ev-plata, etc. */
+  --color-ev-negro: #06080c; /* fondo del logo */
+  --color-ev-azul: #015bc1; /* acciones principales; texto blanco encima = 6,4:1 */
+  --color-ev-dorado: #ceb394; /* precio por mayor y acentos; texto negro encima = 10:1 */
+  --color-ev-dorado-oscuro: #8a6d3b; /* dorado usable como TEXTO sobre blanco (4,85:1) */
+  --color-ev-plata: #c0bbb4; /* bordes y adornos: como texto no cumple contraste AA */
+  --color-ev-oferta: #e53935; /* exclusivo de la etiqueta "Oferta" */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -62,9 +64,9 @@
   --card-foreground: #111111;
   --popover: oklch(1 0 0);
   --popover-foreground: #111111;
-  /* Acción principal = amarillo JD con texto negro */
-  --primary: #fee600;
-  --primary-foreground: #111111;
+  /* Acción principal = azul EV con texto blanco */
+  --primary: #015bc1;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -74,7 +76,7 @@
   --destructive: #e53935;
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #fee600;
+  --ring: #015bc1;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

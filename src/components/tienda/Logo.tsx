@@ -11,17 +11,18 @@ type LogoProps = {
 };
 
 /**
- * Logo de Distribuidora JD. El archivo (public/logo-jd.webp) mide 512 px de
- * ancho; width/height reservan el espacio para que la página no "salte" al
- * cargar. El tamaño real en pantalla lo decide `className`.
+ * Logo de EV Distribuidora. El archivo (public/logo-ev.webp) es un círculo de
+ * 512 × 512 px con fondo transparente; width/height reservan el espacio para
+ * que la página no "salte" al cargar. El tamaño real en pantalla lo decide
+ * `className`.
  */
 export function Logo({ className, priority = false, sizes }: LogoProps) {
   return (
     <Image
-      src="/logo-jd.webp"
-      alt="Distribuidora JD"
+      src="/logo-ev.webp"
+      alt="EV Distribuidora"
       width={512}
-      height={505}
+      height={512}
       priority={priority}
       sizes={sizes}
       className={cn("h-auto w-32", className)}

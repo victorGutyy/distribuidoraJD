@@ -8,9 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Distribuidora JD",
+  title: "EV Distribuidora",
   description:
-    "Catálogo de Distribuidora JD: arma tu pedido por mayor y envíalo por WhatsApp.",
+    "Catálogo de EV Distribuidora: arma tu pedido por mayor y envíalo por WhatsApp.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

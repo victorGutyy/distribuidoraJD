@@ -1,4 +1,4 @@
-# Prompt inicial para Claude Code — Distribuidora JD
+# Prompt inicial para Claude Code — EV Distribuidora
 
 ## Antes de pegar el prompt (lo haces tú, Víctor)
 1. Crea la carpeta del proyecto, por ejemplo `C:\Users\Victor\Proyectos\distribuidora-jd`.
@@ -12,7 +12,7 @@
 ## Prompt (copiar desde aquí)
 
 ```
-Hola Claude. Vamos a construir la Plataforma Catálogo de Distribuidora JD.
+Hola Claude. Vamos a construir la Plataforma Catálogo de EV Distribuidora.
 
 1) Lee completos, en este orden:
    - CLAUDE.md
@@ -25,7 +25,7 @@ Hola Claude. Vamos a construir la Plataforma Catálogo de Distribuidora JD.
 3) Vamos a arrancar la FASE F0 (setup). Antes de tocar nada, preséntame un plan con:
    - Los comandos exactos (compatibles con Git Bash en Windows) para crear el proyecto Next.js con TypeScript, Tailwind, ESLint, App Router y carpeta src/, DENTRO de esta carpeta sin borrar lo que ya existe (CLAUDE.md, docs/, data/, scripts/).
    - La lista de paquetes que vas a instalar en F0, para qué sirve cada uno y si es imprescindible ahora o puede esperar a otra fase.
-   - Los archivos que vas a crear: estructura de carpetas de CLAUDE.md §5, lib/supabase (client, server, admin), .env.example, .gitignore, scripts de package.json (dev, build, lint, typecheck, test), configuración de shadcn/ui y los colores de la marca JD en Tailwind.
+   - Los archivos que vas a crear: estructura de carpetas de CLAUDE.md §5, lib/supabase (client, server, admin), .env.example, .gitignore, scripts de package.json (dev, build, lint, typecheck, test), configuración de shadcn/ui y los colores de la marca EV en Tailwind.
    - Cómo vamos a verificar que F0 quedó bien (página de prueba que lea la conexión a Supabase, lint y typecheck).
 
 4) Espera mi aprobación del plan. No instales nada, no muevas ni borres archivos y no hagas commit sin que te lo confirme.

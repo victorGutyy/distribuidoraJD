@@ -1,5 +1,5 @@
 -- =============================================================================
--- seed.sql — Datos iniciales de Distribuidora JD (F1)
+-- seed.sql — Datos iniciales de EV Distribuidora (F1)
 -- Es idempotente: se puede ejecutar varias veces sin duplicar datos.
 -- NO es una migración: son datos, no esquema. Se ejecuta aparte, tras 0001-0003.
 -- =============================================================================
@@ -17,7 +17,7 @@ where u.id = p.id
 
 -- ---------------------------------------------------------------------------
 -- 2. Municipios del Quindío
--- Quedan INACTIVOS: aún no sabemos cuáles atiende JD ni sus sectores y días de
+-- Quedan INACTIVOS: aún no sabemos cuáles atiende EV ni sus sectores y días de
 -- reparto (pregunta abierta #4 del documento madre). El admin los activa en F6.
 -- ---------------------------------------------------------------------------
 insert into public.municipios (nombre, departamento, activo) values
@@ -42,7 +42,7 @@ on conflict (nombre) do nothing;
 -- ---------------------------------------------------------------------------
 insert into public.configuracion (clave, valor) values
   ('whatsapp_pedidos',          'null'::jsonb),             -- pregunta #6
-  ('mensaje_whatsapp_flotante', to_jsonb('Hola, quiero hacer un pedido en Distribuidora JD'::text)),
+  ('mensaje_whatsapp_flotante', to_jsonb('Hola, quiero hacer un pedido en EV Distribuidora'::text)),
   ('pedido_minimo',             to_jsonb(0)),               -- pregunta #3 (0 = sin mínimo)
   ('regla_mayoreo',             to_jsonb('por_cantidad'::text)),  -- pregunta #2: por_cantidad | por_monto | ambas
   ('umbral_mayor_monto',        to_jsonb(0)),
@@ -50,7 +50,7 @@ insert into public.configuracion (clave, valor) values
   ('dias_no_habiles',           '[]'::jsonb),
   ('mensaje_barra_superior',    to_jsonb('Compra por mayor y ahorra'::text)),
   ('empresa',                   jsonb_build_object(
-      'nombre', 'Distribuidora JD',
+      'nombre', 'EV Distribuidora',
       'nit', null,
       'direccion', null,
       'horarios', null,

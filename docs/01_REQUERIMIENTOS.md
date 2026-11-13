@@ -1,4 +1,4 @@
-# Especificación de Requerimientos — Plataforma Catálogo Distribuidora JD
+# Especificación de Requerimientos — Plataforma Catálogo EV Distribuidora
 
 > Versión 1.0 · 8 de noviembre de 2026
 > Complementa `00_DOCUMENTO_MADRE.md`. Prioridades: **M** = imprescindible en el MVP, **D** = deseable en el MVP, **F2/F3** = fases posteriores.
@@ -40,7 +40,7 @@
 - Imagen principal (relación 1:1, carga diferida)
 - Etiquetas: **Oferta** (rojo), **Agotado** (gris), **Nuevo**
 - Nombre, marca y presentación por defecto
-- **Precio unidad** y, si existe, **"Por mayor: $X desde N und."** destacado en amarillo
+- **Precio unidad** y, si existe, **"Por mayor: $X desde N und."** destacado en dorado
 - Botón "Agregar". Si el producto tiene varias variantes, abre un selector rápido
 - Si está agotado, el botón queda deshabilitado
 
@@ -87,11 +87,11 @@ Panel lateral en escritorio y hoja inferior (drawer) en móvil:
 - Si el celular ya existe, se precargan los datos del cliente (después de confirmarlo)
 
 ### RF-10 Confirmación y WhatsApp · M
-1. El servidor valida, **recalcula los precios** y crea el pedido con el número `JD-000123`
+1. El servidor valida, **recalcula los precios** y crea el pedido con el número `EV-000123`
 2. Se muestra la pantalla "¡Pedido recibido!" con el número y el resumen
 3. Botón **"Enviar por WhatsApp"**, que abre `https://wa.me/57XXXXXXXXXX?text=...` con este mensaje:
 ```
-*Pedido JD-000123*
+*Pedido EV-000123*
 Cliente: Juan Pérez – Tienda La Esquina
 Cel: 3101234567
 Entrega: Calarcá – Barrio Centro · jueves 12/11
@@ -140,7 +140,7 @@ Visible en toda la tienda, con un mensaje inicial configurable.
   - Acciones masivas: activar, desactivar, cambiar categoría, marcar oferta
 - **Formulario:** nombre, descripción, categoría y subcategoría, marca, etiquetas, destacado, nuevo, activo
 - **Variantes dentro del mismo formulario** (tabla editable):
-  - SKU (único; se autogenera si viene vacío, ej. `JD-00001-01`)
+  - SKU (único; se autogenera si viene vacío, ej. `EV-00001-01`)
   - Contenido: valor + unidad (g, kg, ml, L, und, tabletas, cm, m)
   - Unidad de venta: Individual, Paquete, Display, Caja, Bolsa + unidades por empaque
   - Peso de envío (g) y dimensiones alto × ancho × largo (cm)
@@ -206,7 +206,7 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 | RN-04 | Si la variante está en oferta, se usa `precio_oferta`, salvo que el precio por mayor aplicable sea menor; siempre se aplica **el menor** |
 | RN-05 | Los precios se guardan en **pesos enteros** (COP, sin decimales), en columnas `integer` |
 | RN-06 | El servidor recalcula todos los precios. Si difieren de lo que muestra el cliente, se usa el del servidor y se le avisa |
-| RN-07 | El número de pedido es consecutivo y único: `JD-` + secuencia de 6 dígitos |
+| RN-07 | El número de pedido es consecutivo y único: `EV-` + secuencia de 6 dígitos |
 | RN-08 | `pedido_items` guarda una copia del nombre, la presentación, el SKU, el precio aplicado y el tipo de precio |
 | RN-09 | Todo cambio de estado de un pedido registra el usuario, la fecha y una nota en `pedido_historial` |
 | RN-10 | No se borran pedidos, productos con pedidos ni clientes. Se cancelan o desactivan |
@@ -301,7 +301,7 @@ La matriz se implementa con **Row Level Security** en Supabase, más verificacio
 
 **HU-01 — Pedir desde el celular.** *Como tendero, quiero armar mi pedido desde el celular para no esperar al vendedor.*
 - Dado que elegí "Calarcá – Centro", cuando agrego 12 lentejas de 400 g, veo el precio por mayor aplicado y la fecha de entrega
-- Cuando envío el pedido, recibo el número JD-XXXXXX y se abre WhatsApp con el resumen
+- Cuando envío el pedido, recibo el número EV-XXXXXX y se abre WhatsApp con el resumen
 
 **HU-02 — Cargar el catálogo sin precios.** *Como administrador, quiero importar todo el catálogo y poner precios después.*
 - Dado el archivo de importación, cuando confirmo, se crean los productos en estado "sin precio" y no aparecen en la tienda
