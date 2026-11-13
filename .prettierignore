@@ -1,0 +1,14 @@
+node_modules
+.next
+coverage
+package-lock.json
+next-env.d.ts
+
+# Documentación, datos y utilidades del proyecto: no se reformatean automáticamente
+docs
+data
+scripts
+*.pdf
+CLAUDE.md
+AGENTS.md
+README.md
