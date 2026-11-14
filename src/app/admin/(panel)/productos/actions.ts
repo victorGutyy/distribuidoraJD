@@ -13,6 +13,7 @@ import {
   productoSchema,
   type ProductoFormValues,
 } from "@/lib/validaciones/producto";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 /** Solo admin y editor escriben en el catálogo; el vendedor únicamente mira. */
 const ROLES_ESCRITURA = ["admin", "editor"] as const;
@@ -95,6 +96,7 @@ export async function guardarProducto(
     return { error: mensajeDeGuardado(error) };
   }
 
+  invalidarTienda();
   redirect(`/admin/productos/${idGuardado}?ok=producto-guardado`);
 }
 
@@ -137,6 +139,7 @@ export async function duplicarProducto(formData: FormData): Promise<void> {
   );
   if (error || nuevoId === null) redirect("/admin/productos?error=generico");
 
+  invalidarTienda();
   redirect(`/admin/productos/${nuevoId}?ok=producto-duplicado`);
 }
 
@@ -181,6 +184,7 @@ export async function aplicarAccionMasiva(
   if (n === 0)
     return { error: "No tienes permiso o los productos ya no existen." };
 
+  invalidarTienda();
   const verbo =
     accion === "activar"
       ? "activados"

@@ -13,6 +13,7 @@ import {
   textoDe,
   type EstadoFormulario,
 } from "@/lib/validaciones/comun";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 const RUTA = "/admin/categorias";
 
@@ -32,6 +33,7 @@ export async function guardarCategoria(
   formData: FormData,
 ): Promise<EstadoFormulario> {
   await requerirSeccion("categorias");
+  invalidarTienda();
 
   const valores = {
     nombre: textoDe(formData, "nombre"),
@@ -176,6 +178,7 @@ export async function guardarCategoria(
 /** Activa o desactiva una categoría. Al desactivar, sus productos salen de la tienda. */
 export async function alternarCategoria(formData: FormData): Promise<void> {
   await requerirSeccion("categorias");
+  invalidarTienda();
   const id = idObligatorio(formData);
   const supabase = await createClient();
 
@@ -202,6 +205,7 @@ export async function alternarCategoria(formData: FormData): Promise<void> {
 /** Sube o baja una categoría dentro de su nivel (botones ↑ ↓). */
 export async function moverCategoria(formData: FormData): Promise<void> {
   await requerirSeccion("categorias");
+  invalidarTienda();
   const id = idObligatorio(formData);
   const direccion = textoDe(formData, "direccion");
   if (direccion !== "arriba" && direccion !== "abajo") redirect(RUTA);
@@ -238,6 +242,7 @@ export async function moverCategoria(formData: FormData): Promise<void> {
  */
 export async function eliminarCategoria(formData: FormData): Promise<void> {
   await requerirSeccion("categorias");
+  invalidarTienda();
   const id = idObligatorio(formData);
   const supabase = await createClient();
 

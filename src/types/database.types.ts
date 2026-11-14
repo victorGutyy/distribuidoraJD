@@ -895,8 +895,58 @@ export type Database = {
           },
         ]
       }
+      v_tienda_productos: {
+        Row: {
+          cantidad_min_mayor_principal: number | null
+          categoria_id: number | null
+          categoria_nombre: string | null
+          categoria_padre_id: number | null
+          categoria_slug: string | null
+          created_at: string | null
+          descripcion: string | null
+          destacado: boolean | null
+          disponible: boolean | null
+          disponible_principal: boolean | null
+          en_oferta_principal: boolean | null
+          es_nuevo: boolean | null
+          etiquetas: string[] | null
+          hay_oferta: boolean | null
+          id: number | null
+          imagen_miniatura_url: string | null
+          imagen_url: string | null
+          marca_id: number | null
+          marca_nombre: string | null
+          marca_slug: string | null
+          nombre: string | null
+          precio_desde: number | null
+          precio_mayor_principal: number | null
+          precio_oferta_principal: number | null
+          precio_principal: number | null
+          presentacion_principal: string | null
+          slug: string | null
+          texto_busqueda: string | null
+          variante_principal_id: number | null
+          variantes_visibles: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      buscar_catalogo: {
+        Args: { p_limite?: number; p_q: string }
+        Returns: {
+          id: number
+          relevancia: number
+        }[]
+      }
+      conteos_catalogo: {
+        Args: never
+        Returns: {
+          id: number
+          n: number
+          tipo: string
+        }[]
+      }
       f_unaccent: { Args: { texto: string }; Returns: string }
       guardar_precios: { Args: { p_filas: Json }; Returns: Json }
       guardar_producto: {

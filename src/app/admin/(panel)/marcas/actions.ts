@@ -12,6 +12,7 @@ import {
   textoDe,
   type EstadoFormulario,
 } from "@/lib/validaciones/comun";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 const RUTA = "/admin/marcas";
 
@@ -30,6 +31,7 @@ export async function guardarMarca(
   formData: FormData,
 ): Promise<EstadoFormulario> {
   await requerirSeccion("marcas");
+  invalidarTienda();
 
   const valores = { nombre: textoDe(formData, "nombre") };
   const parsed = marcaSchema.safeParse({
@@ -96,6 +98,7 @@ export async function guardarMarca(
 /** Activa o desactiva una marca. */
 export async function alternarMarca(formData: FormData): Promise<void> {
   await requerirSeccion("marcas");
+  invalidarTienda();
   const id = idObligatorio(formData);
   const supabase = await createClient();
 
@@ -122,6 +125,7 @@ export async function alternarMarca(formData: FormData): Promise<void> {
 /** Elimina una marca SOLO si ningún producto la usa (lo impide una llave foránea). */
 export async function eliminarMarca(formData: FormData): Promise<void> {
   await requerirSeccion("marcas");
+  invalidarTienda();
   const id = idObligatorio(formData);
   const supabase = await createClient();
 

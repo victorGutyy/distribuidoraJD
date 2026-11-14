@@ -7,6 +7,7 @@ import {
   type EdicionPrecioEntrada,
 } from "@/lib/validaciones/precios";
 import type { Json } from "@/types/database.types";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 /** Solo admin y editor cambian precios (la función SQL lo vuelve a comprobar). */
 const ROLES_ESCRITURA = ["admin", "editor"] as const;
@@ -77,6 +78,7 @@ export async function guardarPreciosRapido(
     };
   }
 
+  invalidarTienda();
   const resultado = (data ?? {}) as { errores?: { ref: string; mensaje: string }[] };
   const fallidas = (resultado.errores ?? []).map((e) => ({
     id: Number(e.ref),

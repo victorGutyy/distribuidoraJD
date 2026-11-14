@@ -28,6 +28,7 @@ import {
 } from "@/lib/importacion/leer-bd";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 /** Solo admin y editor importan (la función SQL lo vuelve a comprobar). */
 const ROLES_ESCRITURA = ["admin", "editor"] as const;
@@ -218,6 +219,7 @@ export async function aplicarLoteImportacion(
     };
   }
 
+  invalidarTienda();
   const r = (rpc.data ?? {}) as Record<string, unknown>;
   const delSql = (Array.isArray(r.errores) ? r.errores : []) as Record<
     string,

@@ -15,6 +15,7 @@ import { reordenar } from "@/lib/orden";
 import { createClient } from "@/lib/supabase/server";
 import { idDeFormulario } from "@/lib/validaciones/catalogo";
 import { textoDe } from "@/lib/validaciones/comun";
+import { invalidarTienda } from "@/lib/tienda/invalidar";
 
 const ROLES_ESCRITURA = ["admin", "editor"] as const;
 
@@ -41,6 +42,7 @@ export async function registrarImagenes(
   ids: string[],
 ): Promise<ResultadoRegistro> {
   await requerirRol(ROLES_ESCRITURA);
+  invalidarTienda();
   const parsed = registroSchema.safeParse({ productoId, ids });
   if (!parsed.success) return { error: "No se pudo leer la subida." };
 
@@ -117,6 +119,7 @@ function idsDeFormulario(formData: FormData) {
 /** Marca una imagen como la principal del producto (la de la tarjeta y la lista). */
 export async function marcarImagenPrincipal(formData: FormData): Promise<void> {
   await requerirRol(ROLES_ESCRITURA);
+  invalidarTienda();
   const { imagenId, productoId } = idsDeFormulario(formData);
   const supabase = await createClient();
 
@@ -149,6 +152,7 @@ export async function marcarImagenPrincipal(formData: FormData): Promise<void> {
 /** Sube o baja una imagen en el orden de la galería (botones ↑ ↓). */
 export async function moverImagen(formData: FormData): Promise<void> {
   await requerirRol(ROLES_ESCRITURA);
+  invalidarTienda();
   const { imagenId, productoId } = idsDeFormulario(formData);
   const direccion = textoDe(formData, "direccion");
   if (direccion !== "arriba" && direccion !== "abajo") {
@@ -175,6 +179,7 @@ export async function moverImagen(formData: FormData): Promise<void> {
 /** Elimina una imagen (fila y archivos). Si era la principal, la siguiente pasa a serlo. */
 export async function eliminarImagen(formData: FormData): Promise<void> {
   await requerirRol(ROLES_ESCRITURA);
+  invalidarTienda();
   const { imagenId, productoId } = idsDeFormulario(formData);
   const supabase = await createClient();
 
