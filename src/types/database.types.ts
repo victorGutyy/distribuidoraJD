@@ -775,6 +775,75 @@ export type Database = {
           },
         ]
       }
+      v_precios_admin: {
+        Row: {
+          activo: boolean | null
+          cantidad_min_mayor: number | null
+          categoria_id: number | null
+          categoria_nombre: string | null
+          categoria_padre_nombre: string | null
+          disponible: boolean | null
+          en_oferta: boolean | null
+          id: number | null
+          marca_id: number | null
+          marca_nombre: string | null
+          nombre_presentacion: string | null
+          orden: number | null
+          precio_mayor: number | null
+          precio_oferta: number | null
+          precio_unidad: number | null
+          producto_activo: boolean | null
+          producto_id: number | null
+          producto_nombre: string | null
+          sin_precio: boolean | null
+          sku: string | null
+          texto_busqueda: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "v_catalogo_publico"
+            referencedColumns: ["marca_id"]
+          },
+          {
+            foreignKeyName: "variantes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variantes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "v_catalogo_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variantes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "v_productos_admin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_productos_admin: {
         Row: {
           activo: boolean | null
@@ -829,10 +898,12 @@ export type Database = {
     }
     Functions: {
       f_unaccent: { Args: { texto: string }; Returns: string }
+      guardar_precios: { Args: { p_filas: Json }; Returns: Json }
       guardar_producto: {
         Args: { p_producto: Json; p_variantes: Json }
         Returns: number
       }
+      importar_catalogo: { Args: { p_filas: Json }; Returns: Json }
     }
     Enums: {
       estado_pedido:

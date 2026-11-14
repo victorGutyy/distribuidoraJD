@@ -21,10 +21,16 @@ export const UNIDADES_VENTA = [
 export const UNIDADES_CONTENIDO = [
   "g",
   "kg",
+  "mg",
+  "lb",
+  "oz",
   "ml",
+  "cc",
   "L",
   "und",
   "tabletas",
+  "cápsulas",
+  "sobres",
   "cm",
   "m",
 ] as const;

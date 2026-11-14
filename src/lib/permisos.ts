@@ -76,14 +76,14 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Precios",
     href: "/admin/precios",
     roles: ["admin", "editor"],
-    disponible: false,
+    disponible: true,
     fase: "F3",
   },
   importar: {
     etiqueta: "Importar",
     href: "/admin/importar",
     roles: ["admin", "editor"],
-    disponible: false,
+    disponible: true,
     fase: "F3",
   },
   banners: {

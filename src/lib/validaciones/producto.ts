@@ -11,11 +11,11 @@ import { parsearDecimal, parsearEntero, parsearPesos } from "@/lib/numeros";
 
 const vacioANull = (v: string) => (v === "" ? null : v);
 
-const textoOpc = (max: number) =>
+export const textoOpc = (max: number) =>
   z.string().trim().max(max, `Máximo ${max} caracteres`).transform(vacioANull);
 
 /** Pesos enteros > 0 (RN-05). Vacío = sin precio todavía. */
-const pesosOpc = z
+export const pesosOpc = z
   .string()
   .trim()
   .refine((v) => {
@@ -25,7 +25,7 @@ const pesosOpc = z
   }, "Escribe un valor entero mayor que 0, sin decimales (ej. 3200 o 3.200)")
   .transform((v) => (v === "" ? null : (parsearPesos(v) as number)));
 
-const enteroOpc = (min: number, max: number, mensaje: string) =>
+export const enteroOpc = (min: number, max: number, mensaje: string) =>
   z
     .string()
     .trim()
@@ -36,7 +36,7 @@ const enteroOpc = (min: number, max: number, mensaje: string) =>
     }, mensaje)
     .transform((v) => (v === "" ? null : (parsearEntero(v) as number)));
 
-const decimalOpc = z
+export const decimalOpc = z
   .string()
   .trim()
   .refine((v) => {
@@ -45,6 +45,51 @@ const decimalOpc = z
     return n !== null && n > 0 && n <= 1_000_000;
   }, "Escribe un número mayor que 0 (ej. 0,5 o 250)")
   .transform((v) => (v === "" ? null : (parsearDecimal(v) as number)));
+
+/**
+ * Reglas entre los precios de UNA presentación (RN-05). Las usan el formulario de
+ * producto y el editor rápido de precios, para que digan exactamente lo mismo.
+ */
+export function reglasDePreciosVariante(
+  v: {
+    precio_unidad: number | null;
+    precio_mayor: number | null;
+    en_oferta: boolean;
+    precio_oferta: number | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  const problema = (path: string, message: string) =>
+    ctx.addIssue({ code: "custom", path: [path], message });
+
+  if (v.precio_mayor !== null && v.precio_unidad === null) {
+    problema("precio_mayor", "Primero escribe el precio por unidad");
+  }
+  if (
+    v.precio_mayor !== null &&
+    v.precio_unidad !== null &&
+    v.precio_mayor > v.precio_unidad
+  ) {
+    problema(
+      "precio_mayor",
+      "El precio por mayor no puede ser mayor que el de unidad",
+    );
+  }
+  if (v.en_oferta && v.precio_oferta === null) {
+    problema("precio_oferta", "Escribe el precio de oferta");
+  }
+  if (
+    v.en_oferta &&
+    v.precio_oferta !== null &&
+    v.precio_unidad !== null &&
+    v.precio_oferta >= v.precio_unidad
+  ) {
+    problema(
+      "precio_oferta",
+      "La oferta debe ser menor que el precio por unidad",
+    );
+  }
+}
 
 export const varianteSchema = z
   .object({
@@ -88,38 +133,7 @@ export const varianteSchema = z
     disponible: z.boolean(),
     activo: z.boolean(),
   })
-  .superRefine((v, ctx) => {
-    const problema = (path: string, message: string) =>
-      ctx.addIssue({ code: "custom", path: [path], message });
-
-    if (v.precio_mayor !== null && v.precio_unidad === null) {
-      problema("precio_mayor", "Primero escribe el precio por unidad");
-    }
-    if (
-      v.precio_mayor !== null &&
-      v.precio_unidad !== null &&
-      v.precio_mayor > v.precio_unidad
-    ) {
-      problema(
-        "precio_mayor",
-        "El precio por mayor no puede ser mayor que el de unidad",
-      );
-    }
-    if (v.en_oferta && v.precio_oferta === null) {
-      problema("precio_oferta", "Escribe el precio de oferta");
-    }
-    if (
-      v.en_oferta &&
-      v.precio_oferta !== null &&
-      v.precio_unidad !== null &&
-      v.precio_oferta >= v.precio_unidad
-    ) {
-      problema(
-        "precio_oferta",
-        "La oferta debe ser menor que el precio por unidad",
-      );
-    }
-  });
+  .superRefine(reglasDePreciosVariante);
 
 /** "a, b ,A" → ["a","b"] (sin vacíos ni repetidos, sin importar mayúsculas). */
 export function partirEtiquetas(texto: string): string[] {
