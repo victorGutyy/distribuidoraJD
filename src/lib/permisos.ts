@@ -21,6 +21,8 @@ export const ETIQUETA_ROL: Record<Rol, string> = {
 export type Seccion =
   | "dashboard"
   | "productos"
+  | "categorias"
+  | "marcas"
   | "precios"
   | "importar"
   | "banners"
@@ -53,7 +55,21 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Productos",
     href: "/admin/productos",
     roles: ["admin", "editor", "vendedor"],
-    disponible: false,
+    disponible: true,
+    fase: "F2",
+  },
+  categorias: {
+    etiqueta: "Categorías",
+    href: "/admin/categorias",
+    roles: ["admin", "editor"],
+    disponible: true,
+    fase: "F2",
+  },
+  marcas: {
+    etiqueta: "Marcas",
+    href: "/admin/marcas",
+    roles: ["admin", "editor"],
+    disponible: true,
     fase: "F2",
   },
   precios: {
@@ -112,6 +128,8 @@ const ORDEN_MENU: readonly Seccion[] = [
   "dashboard",
   "pedidos",
   "productos",
+  "categorias",
+  "marcas",
   "precios",
   "importar",
   "banners",

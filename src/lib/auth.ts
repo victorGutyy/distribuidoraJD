@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { esRol, puedeVer, type Rol, type Seccion } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,6 +29,11 @@ export type PerfilActual = {
  */
 export const obtenerPerfilActual = cache(
   async (): Promise<PerfilActual | null> => {
+    // Leer la sesión mira la hora (Date.now) para saber si el token venció. Con
+    // Cache Components + partialPrefetching, Next preprocesa las rutas con las
+    // cookies ya disponibles y marca la hora como "valor inestable". connection()
+    // declara que esto se calcula en CADA visita, no al preparar la ruta.
+    await connection();
     const supabase = await createClient();
 
     // getUser() pregunta al servidor de Auth: detecta sesiones revocadas.

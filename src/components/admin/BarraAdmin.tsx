@@ -2,6 +2,7 @@
 
 import {
   FileSpreadsheet,
+  FolderTree,
   Images,
   LayoutDashboard,
   LogOut,
@@ -10,6 +11,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Tag,
   Tags,
   Users,
   X,
@@ -33,6 +35,8 @@ const ICONOS: Record<Seccion, LucideIcon> = {
   dashboard: LayoutDashboard,
   pedidos: ShoppingBag,
   productos: Package,
+  categorias: FolderTree,
+  marcas: Tag,
   precios: Tags,
   importar: FileSpreadsheet,
   banners: Images,

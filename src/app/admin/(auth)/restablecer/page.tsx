@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { FormularioRestablecer } from "@/components/admin/FormularioRestablecer";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,8 @@ export default function PaginaRestablecer() {
 }
 
 async function ContenidoRestablecer() {
+  // Leer la sesión mira la hora: se declara "en cada visita" (ver lib/auth.ts).
+  await connection();
   // Solo se llega aquí con la sesión que crea el enlace del correo (callback).
   const supabase = await createClient();
   const {

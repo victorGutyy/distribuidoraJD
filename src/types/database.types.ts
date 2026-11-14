@@ -522,6 +522,13 @@ export type Database = {
             referencedRelation: "v_catalogo_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "producto_imagenes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "v_productos_admin"
+            referencedColumns: ["id"]
+          },
         ]
       }
       productos: {
@@ -723,6 +730,13 @@ export type Database = {
             referencedRelation: "v_catalogo_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "variantes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "v_productos_admin"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -761,9 +775,64 @@ export type Database = {
           },
         ]
       }
+      v_productos_admin: {
+        Row: {
+          activo: boolean | null
+          categoria_id: number | null
+          categoria_nombre: string | null
+          categoria_padre_nombre: string | null
+          created_at: string | null
+          destacado: boolean | null
+          es_nuevo: boolean | null
+          estado: string | null
+          hay_oferta: boolean | null
+          id: number | null
+          imagen_miniatura_url: string | null
+          marca_id: number | null
+          marca_nombre: string | null
+          n_con_precio: number | null
+          n_variantes: number | null
+          nombre: string | null
+          precio_max: number | null
+          precio_min: number | null
+          skus: string | null
+          slug: string | null
+          texto_busqueda: string | null
+          tiene_imagen: boolean | null
+          updated_at: string | null
+          visible_en_tienda: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "v_catalogo_publico"
+            referencedColumns: ["marca_id"]
+          },
+        ]
+      }
     }
     Functions: {
       f_unaccent: { Args: { texto: string }; Returns: string }
+      guardar_producto: {
+        Args: { p_producto: Json; p_variantes: Json }
+        Returns: number
+      }
     }
     Enums: {
       estado_pedido:

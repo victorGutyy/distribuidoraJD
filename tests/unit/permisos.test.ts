@@ -19,6 +19,8 @@ describe("matriz de permisos (requerimientos §6)", () => {
       "dashboard",
       "pedidos",
       "productos",
+      "categorias",
+      "marcas",
       "precios",
       "importar",
       "banners",
@@ -33,6 +35,8 @@ describe("matriz de permisos (requerimientos §6)", () => {
       "dashboard",
       "pedidos",
       "productos",
+      "categorias",
+      "marcas",
       "precios",
       "importar",
       "banners",
@@ -52,16 +56,22 @@ describe("matriz de permisos (requerimientos §6)", () => {
     }
   });
 
-  it("el vendedor no entra a precios ni a importar", () => {
-    expect(puedeVer("vendedor", "precios")).toBe(false);
-    expect(puedeVer("vendedor", "importar")).toBe(false);
+  it("el vendedor no entra a categorías, marcas, precios ni importar", () => {
+    for (const s of ["categorias", "marcas", "precios", "importar"] as const) {
+      expect(puedeVer("vendedor", s)).toBe(false);
+    }
   });
 
-  it("en F1 solo el inicio está disponible; el resto es 'Próximamente'", () => {
+  it("las secciones ya construidas aparecen disponibles y las de fases futuras no", () => {
     const disponibles = menuParaRol("admin")
       .filter((i) => i.disponible)
       .map((i) => i.seccion);
-    expect(disponibles).toEqual(["dashboard"]);
+    expect(disponibles).toContain("dashboard");
+    expect(disponibles).toContain("categorias");
+    expect(disponibles).toContain("marcas");
+    // Se construyen en F6: siguen como "Próximamente".
+    expect(disponibles).not.toContain("zonas");
+    expect(disponibles).not.toContain("usuarios");
   });
 });
 
