@@ -93,3 +93,21 @@ export async function prepararImagen(
     bitmap.close();
   }
 }
+
+/**
+ * Una sola imagen en WebP con el lado mayor y el peso que se pidan (para los banners,
+ * que son más grandes que las fotos de producto).
+ */
+export async function comprimirImagen(archivo: File, maxLado: number, maxBytes: number): Promise<Blob> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(archivo, { imageOrientation: "from-image" });
+  } catch {
+    throw new ErrorImagen("No se pudo leer la imagen. ¿Está dañada?");
+  }
+  try {
+    return await generar(bitmap, maxLado, maxBytes);
+  } finally {
+    bitmap.close();
+  }
+}

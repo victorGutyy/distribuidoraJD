@@ -5,6 +5,7 @@ import {
   esUuid,
   LIMITES,
   rutaDesdeUrl,
+  rutasDeBanner,
   rutasDeImagen,
   urlPublica,
 } from "@/lib/catalogo/imagenes";
@@ -109,5 +110,23 @@ describe("rutas y URLs", () => {
     expect(esUuid("no-es-uuid")).toBe(false);
     expect(esUuid("../../etc")).toBe(false);
     expect(esUuid("")).toBe(false);
+  });
+});
+
+describe("banners del inicio", () => {
+  const SB = "https://abc.supabase.co";
+  const uuid = "123e4567-e89b-12d3-a456-426614174000";
+
+  it("rutasDeBanner y su ida y vuelta con rutaDesdeUrl", () => {
+    const r = rutasDeBanner(uuid);
+    expect(r).toEqual({ escritorio: `banners/${uuid}.webp`, movil: `banners/${uuid}-m.webp` });
+    expect(rutaDesdeUrl(SB, urlPublica(SB, r.escritorio))).toBe(r.escritorio);
+    expect(rutaDesdeUrl(SB, urlPublica(SB, r.movil))).toBe(r.movil);
+  });
+
+  it("no reconoce otras carpetas del bucket ni archivos raros", () => {
+    expect(rutaDesdeUrl(SB, urlPublica(SB, `otra/${uuid}.webp`))).toBeNull();
+    expect(rutaDesdeUrl(SB, urlPublica(SB, "banners/../productos/1/x.webp"))).toBeNull();
+    expect(rutaDesdeUrl(SB, urlPublica(SB, "banners/archivo.webp"))).toBeNull();
   });
 });

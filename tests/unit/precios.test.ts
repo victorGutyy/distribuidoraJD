@@ -102,6 +102,31 @@ describe("RN-03: mayoreo por monto", () => {
   });
 });
 
+describe("regla \"ambas\": basta con que se cumpla una", () => {
+  const variantes = new Map([
+    [1, v({ precioMayor: 3000, cantidadMinMayor: 12 })],
+    [2, v({ precioUnidad: 5000, precioMayor: 4500, cantidadMinMayor: 100 })],
+  ]);
+  const cfg = { regla: "ambas", umbralMonto: 20000 } as const;
+
+  it("por cantidad: una línea con su cantidad mínima basta, aunque el monto no llegue", () => {
+    const r = calcularCarrito([{ varianteId: 1, cantidad: 12 }], variantes, { regla: "ambas", umbralMonto: 1_000_000 });
+    expect(r.mayoreoPorMonto).toBe(false);
+    expect(r.lineas[0].tipo).toBe("mayor");
+  });
+
+  it("por monto: al superar el umbral, todo lo que tenga mayor lo usa sin la cantidad", () => {
+    const r = calcularCarrito([{ varianteId: 1, cantidad: 2 }, { varianteId: 2, cantidad: 3 }], variantes, cfg); // 6.400 + 15.000
+    expect(r.mayoreoPorMonto).toBe(true);
+    expect(r.lineas.map((l) => l.tipo)).toEqual(["mayor", "mayor"]);
+  });
+
+  it("si no se cumple ninguna, precio normal", () => {
+    const r = calcularCarrito([{ varianteId: 1, cantidad: 2 }], variantes, cfg);
+    expect(r.lineas[0].tipo).toBe("unidad");
+  });
+});
+
 describe("calcularCarrito: totales e invariantes", () => {
   it("subtotal − descuento = total, con ofertas y mayoreo mezclados", () => {
     const variantes = new Map([

@@ -6,7 +6,11 @@
  * Todo en pesos COLOMBIANOS ENTEROS (RN-05): nunca se usan decimales.
  */
 
-export type ReglaMayoreo = "por_cantidad" | "por_monto";
+/**
+ * Cuándo rige el precio por mayor: por cantidad de cada producto (RN-02), por el monto
+ * de todo el pedido (RN-03) o "ambas" (basta con que se cumpla una).
+ */
+export type ReglaMayoreo = "por_cantidad" | "por_monto" | "ambas";
 export type TipoPrecio = "unidad" | "oferta" | "mayor";
 
 /** Lo que se necesita de una presentación para calcular su precio. */
@@ -20,7 +24,7 @@ export type VariantePrecio = {
 
 export type ConfigPrecios = {
   regla: ReglaMayoreo;
-  /** Para "por_monto": desde cuánto (a precio unidad) todo lo que tenga precio por mayor lo usa. 0 = apagado. */
+  /** Para "por_monto" y "ambas": desde cuánto (a precio unidad) todo lo que tenga precio por mayor lo usa. 0 = apagado. */
   umbralMonto: number;
 };
 
@@ -117,12 +121,16 @@ export function calcularCarrito(
     0,
   );
   const mayoreoPorMonto =
-    config.regla === "por_monto" && config.umbralMonto > 0 && montoAPrecioUnidad >= config.umbralMonto;
+    config.regla !== "por_cantidad" && config.umbralMonto > 0 && montoAPrecioUnidad >= config.umbralMonto;
 
   const lineas: LineaCalculada[] = conocidas.map((l) => {
     const v = variantes.get(l.varianteId) as VariantePrecio;
     const aplicaMayor =
-      config.regla === "por_monto" ? mayoreoPorMonto : alcanzaMayorPorCantidad(v, l.cantidad);
+      config.regla === "por_monto"
+        ? mayoreoPorMonto
+        : config.regla === "ambas"
+          ? mayoreoPorMonto || alcanzaMayorPorCantidad(v, l.cantidad)
+          : alcanzaMayorPorCantidad(v, l.cantidad);
     const p = precioDeLinea(v, aplicaMayor);
     return {
       varianteId: l.varianteId,

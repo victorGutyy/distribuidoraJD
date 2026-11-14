@@ -77,6 +77,19 @@ export function rutasDeImagen(productoId: number, uuid: string) {
   };
 }
 
+/** Rutas de un banner del inicio: la imagen de escritorio y, opcional, la del celular (-m). */
+export function rutasDeBanner(uuid: string) {
+  return { escritorio: `banners/${uuid}.webp`, movil: `banners/${uuid}-m.webp` };
+}
+
+/** Tamaños de los banners (RF-30): más anchos que las fotos de producto. */
+export const LIMITES_BANNER = {
+  escritorio: { maxLado: 1600, maxBytes: 350 * 1024 },
+  movil: { maxLado: 900, maxBytes: 200 * 1024 },
+  /** Máximo de banners en el carrusel (RF-01: de 1 a 5). */
+  maxBanners: 5,
+} as const;
+
 /** URL pública de un archivo del bucket. `urlSupabase` = NEXT_PUBLIC_SUPABASE_URL. */
 export function urlPublica(urlSupabase: string, ruta: string): string {
   return `${urlSupabase.replace(/\/+$/, "")}/storage/v1/object/public/${BUCKET}/${ruta}`;
@@ -90,5 +103,5 @@ export function rutaDesdeUrl(urlSupabase: string, url: string): string | null {
   const prefijo = urlPublica(urlSupabase, "");
   if (!url.startsWith(prefijo)) return null;
   const ruta = url.slice(prefijo.length);
-  return /^productos\/\d+\/[0-9a-f-]{36}(-m)?\.webp$/i.test(ruta) ? ruta : null;
+  return /^(productos\/\d+|banners)\/[0-9a-f-]{36}(-m)?\.webp$/i.test(ruta) ? ruta : null;
 }

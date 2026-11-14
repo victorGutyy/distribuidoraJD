@@ -18,6 +18,10 @@ export const AVISOS_OK: Record<string, string> = {
   "marca-eliminada": "Marca eliminada.",
   "imagen-principal": "Imagen principal actualizada.",
   "imagen-eliminada": "Imagen eliminada.",
+  "config-guardada": "Configuración guardada. La tienda ya muestra los cambios.",
+  "banner-actualizado": "Banner actualizado.",
+  "banner-eliminado": "Banner eliminado.",
+  "usuario-actualizado": "Usuario actualizado.",
   "sector-creado": "Sector creado.",
   "sector-actualizado": "Sector actualizado.",
   "sector-activado": "Sector activado.",
@@ -35,6 +39,8 @@ export const AVISOS_ERROR: Record<string, string> = {
     "No se puede eliminar porque está en uso (tiene productos o subcategorías). Desactívala en su lugar.",
   "sector-con-pedidos":
     "No se puede eliminar porque ya tiene pedidos o clientes. Desactívalo en su lugar.",
+  "enlace-invalido":
+    "El enlace debe ser una ruta de la tienda (como /catalogo) o empezar por https://.",
   permiso: "No tienes permiso para hacer esto, o el elemento ya no existe.",
   duplicado: "Ya existe un elemento igual.",
   generico: "No pudimos completar la acción. Inténtalo de nuevo.",

@@ -62,7 +62,7 @@ describe("matriz de permisos (requerimientos §6)", () => {
     }
   });
 
-  it("las secciones ya construidas aparecen disponibles y las de fases futuras no", () => {
+  it("todas las secciones del panel aparecen disponibles", () => {
     const disponibles = menuParaRol("admin")
       .filter((i) => i.disponible)
       .map((i) => i.seccion);
@@ -72,9 +72,12 @@ describe("matriz de permisos (requerimientos §6)", () => {
     expect(disponibles).toContain("importar");
     expect(disponibles).toContain("precios");
     expect(disponibles).toContain("pedidos");
-    // Se construyen en F6: siguen como "Próximamente".
+    expect(disponibles).toContain("config");
+    expect(disponibles).toContain("banners");
+    expect(disponibles).toContain("usuarios");
     expect(disponibles).toContain("zonas");
-    expect(disponibles).not.toContain("usuarios");
+    // Con F6 todas las secciones del panel están construidas.
+    expect(menuParaRol("admin").every((i) => i.disponible)).toBe(true);
   });
 });
 
@@ -113,6 +116,7 @@ describe("rutas públicas del panel y roles", () => {
     expect(esRutaAdminPublica("/admin/recuperar")).toBe(true);
     expect(esRutaAdminPublica("/admin/restablecer")).toBe(true);
     expect(esRutaAdminPublica("/admin/auth/callback")).toBe(true);
+    expect(esRutaAdminPublica("/admin/auth/confirmar")).toBe(true);
   });
 
   it("el resto del panel exige sesión", () => {

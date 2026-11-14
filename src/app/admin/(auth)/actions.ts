@@ -1,8 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { esRol, rutaAdminSegura } from "@/lib/permisos";
+import { obtenerOrigen } from "@/lib/origen";
 import { createClient } from "@/lib/supabase/server";
 import {
   loginSchema,
@@ -17,18 +17,6 @@ import {
 
 // Server Actions: se ejecutan en el servidor aunque se llamen desde un formulario.
 // Siempre validamos con Zod aquí; la validación del navegador es solo comodidad.
-
-/** URL base de la app (para armar el enlace de recuperación). */
-async function obtenerOrigen(): Promise<string> {
-  const h = await headers();
-  const origin = h.get("origin");
-  if (origin) return origin;
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto =
-    h.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
 
 export async function iniciarSesion(
   _estadoPrevio: EstadoFormulario,

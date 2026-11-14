@@ -90,7 +90,7 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Banners",
     href: "/admin/banners",
     roles: ["admin", "editor"],
-    disponible: false,
+    disponible: true,
     fase: "F6",
   },
   pedidos: {
@@ -111,14 +111,14 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Configuración",
     href: "/admin/config",
     roles: ["admin"],
-    disponible: false,
+    disponible: true,
     fase: "F6",
   },
   usuarios: {
     etiqueta: "Usuarios",
     href: "/admin/usuarios",
     roles: ["admin"],
-    disponible: false,
+    disponible: true,
     fase: "F6",
   },
 };
@@ -144,6 +144,7 @@ export const RUTAS_ADMIN_PUBLICAS: readonly string[] = [
   "/admin/recuperar",
   "/admin/restablecer",
   "/admin/auth/callback",
+  "/admin/auth/confirmar",
 ];
 
 export function esRutaAdminPublica(pathname: string): boolean {

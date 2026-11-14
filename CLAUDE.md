@@ -120,6 +120,6 @@ npm run test:e2e     # Playwright
 5. Resume, propón el commit y espera confirmación.
 
 ## 12. Estado actual
-- [x] F0 Setup · [x] F1 BD + Auth · [x] F2 CRUD · [x] F3 Importación + precios · [x] F4 Tienda · [x] F5 Carrito + pedido · [ ] F6 Admin pedidos · [ ] F7 QA + deploy
+- [x] F0 Setup · [x] F1 BD + Auth · [x] F2 CRUD · [x] F3 Importación + precios · [x] F4 Tienda · [x] F5 Carrito + pedido · [x] F6 Admin pedidos · [ ] F7 QA + deploy
 
 *(Actualiza esta lista al terminar cada fase.)*
