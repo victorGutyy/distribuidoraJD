@@ -97,7 +97,7 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Pedidos",
     href: "/admin/pedidos",
     roles: ["admin", "editor", "vendedor"],
-    disponible: false,
+    disponible: true,
     fase: "F6",
   },
   zonas: {

@@ -242,7 +242,8 @@ pedidos           (id, numero UNIQUE, cliente_id → clientes, sector_id NULL, r
                    subtotal int, descuento_mayor int, costo_envio int, total int,
                    metodo_pago DEFAULT 'contraentrega', notas, ip_origen, created_at, updated_at)
 pedido_items      (id, pedido_id, variante_id NULL, sku, nombre_producto, presentacion,
-                   cantidad int, precio_unitario_aplicado int, tipo_precio ('unidad'|'mayor'|'oferta'), subtotal int)
+                   cantidad int, precio_unitario_aplicado int, precio_base int NULL (precio antes del mayoreo; permite recalcular el ahorro al editar cantidades, migración 0010),
+                   tipo_precio ('unidad'|'mayor'|'oferta'), subtotal int)
 pedido_historial  (id, pedido_id, estado_anterior, estado_nuevo, usuario_id NULL, nota, created_at)
 
 perfiles          (id = auth.users.id, nombre, rol enum('admin','editor','vendedor'), sectores_asignados int[], activo)

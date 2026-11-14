@@ -71,6 +71,7 @@ describe("matriz de permisos (requerimientos §6)", () => {
     expect(disponibles).toContain("marcas");
     expect(disponibles).toContain("importar");
     expect(disponibles).toContain("precios");
+    expect(disponibles).toContain("pedidos");
     // Se construyen en F6: siguen como "Próximamente".
     expect(disponibles).toContain("zonas");
     expect(disponibles).not.toContain("usuarios");

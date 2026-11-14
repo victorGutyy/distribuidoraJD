@@ -329,6 +329,7 @@ export type Database = {
           id: number
           nombre_producto: string
           pedido_id: number
+          precio_base: number | null
           precio_unitario_aplicado: number
           presentacion: string | null
           sku: string
@@ -341,6 +342,7 @@ export type Database = {
           id?: never
           nombre_producto: string
           pedido_id: number
+          precio_base?: number | null
           precio_unitario_aplicado: number
           presentacion?: string | null
           sku: string
@@ -353,6 +355,7 @@ export type Database = {
           id?: never
           nombre_producto?: string
           pedido_id?: number
+          precio_base?: number | null
           precio_unitario_aplicado?: number
           presentacion?: string | null
           sku?: string
@@ -775,6 +778,33 @@ export type Database = {
           },
         ]
       }
+      v_pedidos_admin: {
+        Row: {
+          cliente_id: number | null
+          cliente_nombre: string | null
+          costo_envio: number | null
+          created_at: string | null
+          descuento_mayor: number | null
+          direccion_entrega: string | null
+          estado: Database["public"]["Enums"]["estado_pedido"] | null
+          fecha_entrega_estimada: string | null
+          id: number | null
+          municipio_nombre: string | null
+          n_items: number | null
+          n_unidades: number | null
+          nombre_negocio: string | null
+          notas: string | null
+          numero: string | null
+          recoge_en_bodega: boolean | null
+          sector_id: number | null
+          sector_nombre: string | null
+          subtotal: number | null
+          texto_busqueda: string | null
+          total: number | null
+          celular: string | null
+        }
+        Relationships: []
+      }
       v_precios_admin: {
         Row: {
           activo: boolean | null
@@ -932,6 +962,18 @@ export type Database = {
       }
     }
     Functions: {
+      cambiar_estado_pedido: {
+        Args: {
+          p_estado: Database["public"]["Enums"]["estado_pedido"]
+          p_nota?: string
+          p_pedido_id: number
+        }
+        Returns: Json
+      }
+      editar_items_pedido: {
+        Args: { p_items: Json; p_nota: string; p_pedido_id: number }
+        Returns: Json
+      }
       crear_pedido: { Args: { p_datos: Json }; Returns: Json }
       buscar_catalogo: {
         Args: { p_limite?: number; p_q: string }

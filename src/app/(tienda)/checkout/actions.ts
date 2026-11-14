@@ -159,6 +159,7 @@ export async function crearPedido(entrada: CheckoutEntrada): Promise<ResultadoPe
           presentacion: v.datos.presentacion,
           cantidad: l.cantidad,
           precio_unitario_aplicado: l.precioUnitario,
+          precio_base: l.precioBase,
           tipo_precio: l.tipo,
           subtotal: l.subtotal,
         };
