@@ -433,7 +433,7 @@ def convertir(filas: list[dict], decisiones: dict, asignador: AsignadorSku) -> d
     revision: list[dict] = []
     correcciones_categoria = 0
 
-    for f in filas:
+    for indice, f in enumerate(filas):
         cat, sub, corregida = corregir_categoria(f["categoria_propuesta"], f["subcategoria_propuesta"], f["nombre"])
         correcciones_categoria += corregida
         detalle = clasificar_detalle(f["marca_o_detalle"])
@@ -446,6 +446,7 @@ def convertir(filas: list[dict], decisiones: dict, asignador: AsignadorSku) -> d
             "detalle": detalle_texto, "pagina": f["pagina_pdf"], "variantes": collections.OrderedDict(),
             "etiquetas": set(), "origen_marca": origen,
         })
+        prod.setdefault("filas", []).append(indice)  # qué filas del catálogo forman este producto
         for v in vars_:
             if v["promo"]:
                 prod["etiquetas"].add(v["promo"])
@@ -469,6 +470,8 @@ def convertir(filas: list[dict], decisiones: dict, asignador: AsignadorSku) -> d
         descripcion = "" if (distingue or not p["detalle"]) else p["detalle"]
         nombres_usados[(sub_n, norm(nombre_final), marca_n)] += 1
         clave_producto = f"{sub_n}|{norm(nombre_final)}|{marca_n}|{detalle_n}"
+        p["sku_producto"] = asignador.producto(clave_producto)
+        p["nombre_final"] = nombre_final
         for v in p["variantes"].values():
             salida.append({
                 "sku": asignador.variante(clave_producto, clave_variante(v)),

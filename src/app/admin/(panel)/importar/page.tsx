@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { Importador } from "@/components/admin/importar/Importador";
 import {
@@ -47,6 +48,17 @@ async function ContenidoImportar() {
           pasar antes de guardar.
         </p>
       </header>
+
+      <Link
+        href="/admin/importar/fotos"
+        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-background p-4 hover:border-ev-azul hover:bg-ev-azul/5"
+      >
+        <span>
+          <span className="block font-semibold">Fotos en lote</span>
+          <span className="text-sm text-muted-foreground">Sube muchas fotos de una vez, asignadas a cada producto por su SKU.</span>
+        </span>
+        <span className="text-sm font-medium text-ev-azul">Abrir →</span>
+      </Link>
 
       <Importador />
 

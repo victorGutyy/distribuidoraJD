@@ -46,3 +46,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Fotos extraídas del portafolio y hojas de contactos de revisión (pesan mucho y el repositorio es público)
+/data/imagenes_pdf/
+/data/imagenes_pdf_revisar/
+/data/revision_imagenes/hojas/
