@@ -104,7 +104,7 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     etiqueta: "Zonas de entrega",
     href: "/admin/zonas",
     roles: ["admin"],
-    disponible: false,
+    disponible: true,
     fase: "F6",
   },
   config: {

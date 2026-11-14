@@ -1,5 +1,6 @@
-import { MessageCircle, ShoppingCart } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { BotonCarrito } from "@/components/tienda/carrito/BotonCarrito";
 import { BuscadorTienda } from "@/components/tienda/BuscadorTienda";
 import { Logo } from "@/components/tienda/Logo";
 import type { CategoriaTienda } from "@/lib/tienda/categorias";
@@ -16,7 +17,7 @@ type Props = {
 /**
  * Encabezado de la tienda (RF-01): logo, buscador, carrito y WhatsApp, y debajo
  * el menú de categorías principales. Mobile-first: en el celular el buscador va
- * en su propia fila. El carrito se activa en la fase F5.
+ * en su propia fila.
  */
 export function EncabezadoTienda({ categorias, conteos, whatsapp, mensajeWhatsApp }: Props) {
   const raices = categorias.filter((c) => c.parent_id === null && (conteos.get(c.id) ?? 0) > 0);
@@ -44,13 +45,7 @@ export function EncabezadoTienda({ categorias, conteos, whatsapp, mensajeWhatsAp
               WhatsApp
             </a>
           ) : null}
-          <span
-            className="relative flex size-11 items-center justify-center rounded-lg text-muted-foreground"
-            title="El carrito estará disponible muy pronto"
-          >
-            <ShoppingCart className="size-6" aria-hidden="true" />
-            <span className="sr-only">Carrito (disponible pronto)</span>
-          </span>
+          <BotonCarrito />
         </div>
       </div>
 

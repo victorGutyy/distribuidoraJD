@@ -21,7 +21,8 @@ const COLUMNAS_TARJETA =
   "id, nombre, slug, marca_nombre, categoria_nombre, variantes_visibles, precio_desde, " +
   "hay_oferta, disponible, es_nuevo, destacado, imagen_url, imagen_miniatura_url, " +
   "presentacion_principal, precio_principal, precio_mayor_principal, " +
-  "cantidad_min_mayor_principal, en_oferta_principal, precio_oferta_principal, created_at";
+  "cantidad_min_mayor_principal, en_oferta_principal, precio_oferta_principal, " +
+  "variante_principal_id, disponible_principal, created_at";
 
 export type ResultadoCatalogo = {
   productos: ProductoTarjeta[];

@@ -12,6 +12,13 @@ export type ConfigTienda = {
   whatsapp: string | null;
   mensajeWhatsApp: string;
   pedidoMinimo: number;
+  /** Regla del precio por mayor: por cantidad (RN-02) o por monto del pedido (RN-03). */
+  reglaMayoreo: "por_cantidad" | "por_monto";
+  umbralMayorMonto: number;
+  /** "HH:MM" límite, el día anterior al reparto, para entrar en esa ruta. */
+  horaCorte: string;
+  /** Fechas "AAAA-MM-DD" sin reparto ni atención. */
+  diasNoHabiles: string[];
   empresa: {
     nombre: string;
     direccion: string | null;
@@ -28,6 +35,9 @@ const texto = (v: unknown): string | null =>
 const entero = (v: unknown): number =>
   typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.round(v) : 0;
 
+const horaValida = (v: unknown): string | null =>
+  typeof v === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(v.trim()) ? v.trim() : null;
+
 const esObjeto = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -43,6 +53,14 @@ export function leerConfigTienda(filas: readonly FilaConfig[]): ConfigTienda {
       texto(por.get("mensaje_whatsapp_flotante")) ??
       "Hola, quiero hacer un pedido",
     pedidoMinimo: entero(por.get("pedido_minimo")),
+    reglaMayoreo: por.get("regla_mayoreo") === "por_monto" ? "por_monto" : "por_cantidad",
+    umbralMayorMonto: entero(por.get("umbral_mayor_monto")),
+    horaCorte: horaValida(por.get("hora_corte")) ?? "17:00",
+    diasNoHabiles: Array.isArray(por.get("dias_no_habiles"))
+      ? (por.get("dias_no_habiles") as unknown[]).filter(
+          (d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d),
+        )
+      : [],
     empresa: {
       nombre: texto(empresa.nombre) ?? "EV Distribuidora",
       direccion: texto(empresa.direccion),

@@ -3,7 +3,9 @@
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { formatCOP } from "@/lib/formato";
+import { BotonAgregar } from "@/components/tienda/carrito/BotonAgregar";
 import {
+  aDatosItem,
   mensajeMayoreo,
   precioMostrado,
   type PresentacionVista,
@@ -14,10 +16,16 @@ const MAX_CANTIDAD = 9999;
 
 /**
  * Selector de presentación y cantidad (RF-06). Muestra el precio según la
- * cantidad y el mensaje de mayoreo; el botón de agregar al carrito se activa en
- * la fase F5. La ficha técnica sigue a la presentación elegida.
+ * cantidad y el mensaje de mayoreo, y agrega al carrito la presentación elegida.
+ * La ficha técnica sigue a la presentación elegida.
  */
-export function SelectorPresentacion({ presentaciones }: { presentaciones: PresentacionVista[] }) {
+export function SelectorPresentacion({
+  presentaciones,
+  producto,
+}: {
+  presentaciones: PresentacionVista[];
+  producto: { nombre: string; slug: string; imagen: string | null };
+}) {
   const [indice, setIndice] = useState(0);
   const [cantidad, setCantidad] = useState(1);
   const p = presentaciones[indice];
@@ -125,14 +133,12 @@ export function SelectorPresentacion({ presentaciones }: { presentaciones: Prese
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled
-          title="El carrito estará disponible muy pronto"
-          className="h-11 flex-1 rounded-lg bg-ev-azul px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-        >
-          {p.disponible ? "Agregar al carrito" : "Agotado"}
-        </button>
+        <BotonAgregar
+          item={aDatosItem(p, producto)}
+          cantidad={cantidad}
+          href={`/producto/${producto.slug}`}
+          className="h-11 flex-1 px-6 sm:flex-none"
+        />
       </div>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl border bg-muted/40 p-4 text-sm">

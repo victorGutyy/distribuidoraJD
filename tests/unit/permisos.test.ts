@@ -72,7 +72,7 @@ describe("matriz de permisos (requerimientos §6)", () => {
     expect(disponibles).toContain("importar");
     expect(disponibles).toContain("precios");
     // Se construyen en F6: siguen como "Próximamente".
-    expect(disponibles).not.toContain("zonas");
+    expect(disponibles).toContain("zonas");
     expect(disponibles).not.toContain("usuarios");
   });
 });

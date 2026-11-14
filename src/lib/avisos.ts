@@ -18,6 +18,13 @@ export const AVISOS_OK: Record<string, string> = {
   "marca-eliminada": "Marca eliminada.",
   "imagen-principal": "Imagen principal actualizada.",
   "imagen-eliminada": "Imagen eliminada.",
+  "sector-creado": "Sector creado.",
+  "sector-actualizado": "Sector actualizado.",
+  "sector-activado": "Sector activado.",
+  "sector-desactivado": "Sector desactivado. Ya no aparece al elegir la zona de entrega.",
+  "sector-eliminado": "Sector eliminado.",
+  "municipio-activado": "Municipio activado.",
+  "municipio-desactivado": "Municipio desactivado. Sus sectores dejan de aparecer en la tienda.",
   "producto-guardado": "Producto guardado.",
   "producto-duplicado":
     "Producto duplicado. La copia está inactiva: revísala y actívala cuando esté lista.",
@@ -26,6 +33,8 @@ export const AVISOS_OK: Record<string, string> = {
 export const AVISOS_ERROR: Record<string, string> = {
   "con-datos":
     "No se puede eliminar porque está en uso (tiene productos o subcategorías). Desactívala en su lugar.",
+  "sector-con-pedidos":
+    "No se puede eliminar porque ya tiene pedidos o clientes. Desactívalo en su lugar.",
   permiso: "No tienes permiso para hacer esto, o el elemento ya no existe.",
   duplicado: "Ya existe un elemento igual.",
   generico: "No pudimos completar la acción. Inténtalo de nuevo.",

@@ -5,7 +5,10 @@ import { EncabezadoTienda } from "@/components/tienda/EncabezadoTienda";
 import { PieTienda } from "@/components/tienda/PieTienda";
 import { conteosAcumulados } from "@/lib/tienda/categorias";
 import { obtenerFacetas } from "@/lib/tienda/consultas";
-import { obtenerCategoriasTienda, obtenerConfigTienda } from "@/lib/tienda/datos";
+import { obtenerCategoriasTienda, obtenerConfigTienda, obtenerZonasTienda } from "@/lib/tienda/datos";
+import { PanelCarrito } from "@/components/tienda/carrito/PanelCarrito";
+import { ProveedorTienda } from "@/components/tienda/carrito/ProveedorTienda";
+import { CONFIG_ENTREGA_POR_DEFECTO } from "@/lib/entregas";
 
 export const metadata: Metadata = {
   title: { default: "EV Distribuidora", template: "%s | EV Distribuidora" },
@@ -17,10 +20,11 @@ export const metadata: Metadata = {
  * corta (lib/tienda/datos.ts); el contenido de cada página se lee fresco.
  */
 export default async function LayoutTienda({ children }: LayoutProps<"/">) {
-  const [config, categorias, facetas] = await Promise.all([
+  const [config, categorias, facetas, zonas] = await Promise.all([
     obtenerConfigTienda(),
     obtenerCategoriasTienda(),
     obtenerFacetas(),
+    obtenerZonasTienda(),
   ]);
   const conteos = conteosAcumulados(
     categorias,
@@ -28,7 +32,20 @@ export default async function LayoutTienda({ children }: LayoutProps<"/">) {
   );
 
   return (
-    <>
+    <ProveedorTienda
+      valor={{
+        precios: { regla: config.reglaMayoreo, umbralMonto: config.umbralMayorMonto },
+        entrega: {
+          horaCorte: config.horaCorte,
+          diasNoHabiles: config.diasNoHabiles,
+          diasBodega: CONFIG_ENTREGA_POR_DEFECTO.diasBodega,
+        },
+        pedidoMinimo: config.pedidoMinimo,
+        whatsapp: config.whatsapp,
+        mensajeWhatsApp: config.mensajeWhatsApp,
+        zonas,
+      }}
+    >
       <BarraSuperior mensaje={config.mensajeBarra} />
       <EncabezadoTienda
         categorias={categorias}
@@ -39,6 +56,7 @@ export default async function LayoutTienda({ children }: LayoutProps<"/">) {
       <div className="flex flex-1 flex-col">{children}</div>
       <PieTienda config={config} />
       <BotonWhatsApp numero={config.whatsapp} mensaje={config.mensajeWhatsApp} />
-    </>
+      <PanelCarrito />
+    </ProveedorTienda>
   );
 }

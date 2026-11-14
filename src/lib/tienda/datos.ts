@@ -32,3 +32,37 @@ export async function obtenerCategoriasTienda(): Promise<CategoriaTienda[]> {
     .order("nombre");
   return data ?? [];
 }
+
+export type ZonaTienda = {
+  id: number;
+  nombre: string;
+  sectores: { id: number; nombre: string; diasReparto: number[]; costoEnvio: number }[];
+};
+
+/**
+ * Municipios activos que tienen al menos un sector activo (lo que el cliente puede
+ * elegir al pedir). Lo que no sea público lo oculta RLS.
+ */
+export async function obtenerZonasTienda(): Promise<ZonaTienda[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("tienda");
+  const supabase = createPublicClient();
+  const [{ data: municipios }, { data: sectores }] = await Promise.all([
+    supabase.from("municipios").select("id, nombre").eq("activo", true).order("nombre"),
+    supabase
+      .from("sectores")
+      .select("id, municipio_id, nombre, dias_reparto, costo_envio")
+      .eq("activo", true)
+      .order("nombre"),
+  ]);
+  return (municipios ?? [])
+    .map((m) => ({
+      id: m.id,
+      nombre: m.nombre,
+      sectores: (sectores ?? [])
+        .filter((s) => s.municipio_id === m.id)
+        .map((s) => ({ id: s.id, nombre: s.nombre, diasReparto: s.dias_reparto, costoEnvio: s.costo_envio })),
+    }))
+    .filter((m) => m.sectores.length > 0);
+}

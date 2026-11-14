@@ -114,7 +114,14 @@ async function ContenidoProducto({ params }: { params: Props["params"] }) {
             ) : null}
           </header>
 
-          <SelectorPresentacion presentaciones={presentaciones} />
+          <SelectorPresentacion
+            presentaciones={presentaciones}
+            producto={{
+              nombre: producto.nombre,
+              slug: producto.slug,
+              imagen: producto.imagenes[0]?.miniatura ?? producto.imagenes[0]?.url ?? null,
+            }}
+          />
 
           {producto.descripcion ? (
             <section aria-labelledby="descripcion" className="grid gap-1">

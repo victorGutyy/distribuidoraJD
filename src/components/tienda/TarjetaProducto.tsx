@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BotonAgregar } from "@/components/tienda/carrito/BotonAgregar";
 import { Logo } from "@/components/tienda/Logo";
 import { formatCOP } from "@/lib/formato";
 import type { ProductoTarjeta } from "@/lib/tienda/tarjeta";
 
 /**
- * Tarjeta de producto del listado (RF-03). El botón "Agregar" se activa en la
- * fase F5, cuando exista el carrito.
+ * Tarjeta de producto del listado (RF-03). "Agregar" suma la presentación
+ * principal; si el producto tiene varias, lleva al detalle para elegir.
  */
 export function TarjetaProducto({
   producto: p,
@@ -78,14 +79,12 @@ export function TarjetaProducto({
           ) : null}
         </div>
 
-        <button
-          type="button"
-          disabled
-          title="El carrito estará disponible muy pronto"
-          className="mt-2 h-11 rounded-lg bg-ev-azul text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {p.agotado ? "Agotado" : "Agregar"}
-        </button>
+        <BotonAgregar
+          item={p.item}
+          href={href}
+          varias={p.masPresentaciones}
+          className="mt-2"
+        />
       </div>
     </article>
   );

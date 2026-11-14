@@ -1,3 +1,4 @@
+import type { DatosItem } from "@/lib/carrito";
 import type { Tables } from "@/types/database.types";
 
 /**
@@ -202,5 +203,27 @@ export function jsonLdProducto(datos: {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
     },
+  };
+}
+
+/** Lo que se guarda en el carrito al agregar una presentación desde el detalle del producto. */
+export function aDatosItem(
+  p: PresentacionVista,
+  producto: { nombre: string; slug: string; imagen: string | null },
+): DatosItem {
+  return {
+    varianteId: p.id,
+    productoSlug: producto.slug,
+    nombre: producto.nombre,
+    presentacion: p.etiqueta,
+    imagen: producto.imagen,
+    precio: {
+      precioUnidad: p.precioUnidad,
+      precioMayor: p.mayor?.precio ?? null,
+      cantidadMinMayor: p.mayor?.desde ?? null,
+      enOferta: p.precioOferta !== null,
+      precioOferta: p.precioOferta,
+    },
+    disponible: p.disponible,
   };
 }

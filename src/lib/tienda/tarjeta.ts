@@ -1,3 +1,4 @@
+import type { DatosItem } from "@/lib/carrito";
 import type { Tables } from "@/types/database.types";
 
 /**
@@ -27,6 +28,8 @@ export type ProductoTarjeta = {
   esOferta: boolean;
   esNuevo: boolean;
   agotado: boolean;
+  /** Lo que se guarda en el carrito al agregar la presentación principal. */
+  item: DatosItem | null;
 };
 
 /** Convierte una fila de v_tienda_productos; null si le faltan datos básicos. */
@@ -68,5 +71,23 @@ export function aTarjeta(f: FilaTienda): ProductoTarjeta | null {
     esNuevo: f.es_nuevo === true,
     // Agotado = ninguna presentación visible está disponible.
     agotado: f.disponible === false,
+    item:
+      f.variante_principal_id !== null
+        ? {
+            varianteId: f.variante_principal_id,
+            productoSlug: f.slug,
+            nombre: f.nombre,
+            presentacion: f.presentacion_principal,
+            imagen: f.imagen_miniatura_url ?? f.imagen_url,
+            precio: {
+              precioUnidad: f.precio_principal,
+              precioMayor: f.precio_mayor_principal,
+              cantidadMinMayor: f.cantidad_min_mayor_principal,
+              enOferta: f.en_oferta_principal === true,
+              precioOferta: f.precio_oferta_principal,
+            },
+            disponible: f.disponible_principal !== false,
+          }
+        : null,
   };
 }

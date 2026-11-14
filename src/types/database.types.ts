@@ -932,6 +932,7 @@ export type Database = {
       }
     }
     Functions: {
+      crear_pedido: { Args: { p_datos: Json }; Returns: Json }
       buscar_catalogo: {
         Args: { p_limite?: number; p_q: string }
         Returns: {
