@@ -63,7 +63,7 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
   return (
     <>
       {/* Móvil: barra superior con botón de menú */}
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2 md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background px-4 py-2 md:hidden print:hidden">
         <Logo className="w-10" sizes="40px" />
         <Button
           type="button"
@@ -78,11 +78,13 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
         </Button>
       </header>
 
-      {/* Menú: lateral fijo en escritorio, desplegable en móvil */}
+      {/* Menú: en escritorio queda FIJO a la izquierda (ocupa la altura de la pantalla y
+          tiene su propio scroll si no cabe); solo se desplaza el contenido de la página.
+          En móvil es desplegable, y la barra de arriba también queda fija. */}
       <aside
         id="menu-admin"
         className={cn(
-          "flex-col border-r bg-background md:flex md:w-64 md:shrink-0",
+          "flex-col border-r bg-background md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:shrink-0 md:self-start md:overflow-y-auto print:hidden",
           abierto ? "flex" : "hidden",
         )}
       >
