@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Boxes,
   FileSpreadsheet,
   FolderTree,
   Images,
@@ -38,6 +39,7 @@ const ICONOS: Record<Seccion, LucideIcon> = {
   categorias: FolderTree,
   marcas: Tag,
   precios: Tags,
+  inventario: Boxes,
   importar: FileSpreadsheet,
   banners: Images,
   zonas: MapPin,

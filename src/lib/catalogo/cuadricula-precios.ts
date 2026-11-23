@@ -22,6 +22,8 @@ export type FilaPrecio = {
   en_oferta: boolean;
   precio_oferta: number | null;
   disponible: boolean;
+  /** Privado (RN-14): viene de variante_costos, no de la vista. null = sin dato. */
+  costo: number | null;
 };
 
 export type ValoresPrecio = {
@@ -31,14 +33,26 @@ export type ValoresPrecio = {
   en_oferta: boolean;
   precio_oferta: string;
   disponible: boolean;
+  costo: string;
 };
 
-export type CampoTexto = "precio_unidad" | "precio_mayor" | "cantidad_min_mayor" | "precio_oferta";
+export type CampoTexto =
+  | "precio_unidad"
+  | "precio_mayor"
+  | "cantidad_min_mayor"
+  | "precio_oferta"
+  | "costo";
 
 const texto = (v: number | null) => (v === null ? "" : String(v));
 
-/** Convierte una fila de la vista (valores anulables) en una fila bien tipada. */
-export function aFilaPrecio(v: Tables<"v_precios_admin">): FilaPrecio | null {
+/**
+ * Convierte una fila de la vista (valores anulables) en una fila bien tipada.
+ * El costo no está en la vista (es privado): se consulta aparte y se pasa aquí.
+ */
+export function aFilaPrecio(
+  v: Tables<"v_precios_admin">,
+  costo: number | null = null,
+): FilaPrecio | null {
   if (v.id === null || v.sku === null || v.producto_nombre === null) return null;
   return {
     id: v.id,
@@ -52,6 +66,7 @@ export function aFilaPrecio(v: Tables<"v_precios_admin">): FilaPrecio | null {
     en_oferta: v.en_oferta ?? false,
     precio_oferta: v.precio_oferta,
     disponible: v.disponible ?? true,
+    costo,
   };
 }
 
@@ -63,6 +78,7 @@ export function valoresDesdeFila(f: FilaPrecio): ValoresPrecio {
     en_oferta: f.en_oferta,
     precio_oferta: texto(f.precio_oferta),
     disponible: f.disponible,
+    costo: texto(f.costo),
   };
 }
 
@@ -79,7 +95,16 @@ const CAMPOS_TEXTO: readonly CampoTexto[] = [
   "precio_mayor",
   "cantidad_min_mayor",
   "precio_oferta",
+  "costo",
 ];
+
+/**
+ * ¿Cambió el costo de esta fila? Solo las filas con el costo cambiado se mandan a
+ * guardar_costos: así no se crean filas vacías en la tabla privada ni se pisa nada.
+ */
+export function costoCambiado(base: ValoresPrecio, actual: ValoresPrecio): boolean {
+  return canonico("costo", base.costo) !== canonico("costo", actual.costo);
+}
 
 /** ¿La fila editada es distinta de la guardada? */
 export function filaCambiada(base: ValoresPrecio, actual: ValoresPrecio): boolean {

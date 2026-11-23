@@ -1,4 +1,5 @@
 import type { Cambio } from "@/lib/importacion/comparar";
+import { formatStock } from "@/lib/costos";
 import { formatCOP } from "@/lib/formato";
 
 /**
@@ -26,6 +27,8 @@ const ETIQUETA_CAMPO: Record<string, string> = {
   precio_oferta: "Precio de oferta",
   disponible: "Disponible",
   activo: "Activo",
+  costo: "Costo",
+  stock: "Existencias",
 };
 
 export function etiquetaCampo(campo: string): string {
@@ -36,9 +39,10 @@ export function etiquetaCampo(campo: string): string {
 export function textoValor(campo: string, valor: Cambio["antes"]): string {
   if (valor === null || valor === "") return "sin dato";
   if (typeof valor === "boolean") return valor ? "sí" : "no";
-  if (typeof valor === "number" && campo.startsWith("precio")) {
+  if (typeof valor === "number" && (campo.startsWith("precio") || campo === "costo")) {
     return formatCOP(valor);
   }
+  if (typeof valor === "number" && campo === "stock") return formatStock(valor);
   return String(valor);
 }
 

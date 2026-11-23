@@ -6,14 +6,44 @@ import { guardarPreciosRapido } from "@/app/admin/(panel)/precios/actions";
 import { AvisoError, AvisoInfo } from "@/components/admin/Campo";
 import { Button } from "@/components/ui/button";
 import {
+  costoCambiado,
   idsModificados,
   valoresDesdeFila,
   type CampoTexto,
   type FilaPrecio,
   type ValoresPrecio,
 } from "@/lib/catalogo/cuadricula-precios";
+import {
+  calcularGanancia,
+  estadoMargen,
+  formatPorcentaje,
+  type EstadoMargen,
+} from "@/lib/costos";
+import { formatCOP } from "@/lib/formato";
+import { parsearPesos } from "@/lib/numeros";
 
-const COLUMNAS = "lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto_minmax(0,1fr)_auto]";
+// producto | unidad | mayor | mín. mayor | costo | ganancia | oferta | precio oferta | disp.
+const COLUMNAS =
+  "lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_minmax(0,1.3fr)_auto_minmax(0,1fr)_auto]";
+
+const CLASE_MARGEN: Record<EstadoMargen, string> = {
+  sin_dato: "text-muted-foreground",
+  perdida: "font-semibold text-destructive",
+  bajo: "font-medium text-ev-dorado-oscuro",
+  ok: "text-foreground",
+};
+
+/** Ganancia y margen de lo que hay escrito AHORA en la fila (antes de guardar). */
+function textoGanancia(v: ValoresPrecio): { texto: string; estado: EstadoMargen } {
+  const precio = v.precio_unidad.trim() === "" ? null : parsearPesos(v.precio_unidad);
+  const costo = v.costo.trim() === "" ? null : parsearPesos(v.costo);
+  const g = calcularGanancia(precio, costo);
+  if (!g) return { texto: "—", estado: "sin_dato" };
+  return {
+    texto: `${formatCOP(g.ganancia)} · ${formatPorcentaje(g.margenPct)}`,
+    estado: estadoMargen(precio, costo),
+  };
+}
 
 const claseInput =
   "h-10 w-full rounded-lg border bg-background px-2 text-base md:text-sm tabular-nums focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none";
@@ -61,7 +91,12 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
     setAviso(null);
     try {
       const r = await guardarPreciosRapido(
-        modificados.map((id) => ({ id, ...valores[id] })),
+        modificados.map((id) => ({
+          id,
+          ...valores[id],
+          // Solo si el costo cambió se guarda (si no, la fila no toca la tabla privada).
+          costo_modificado: costoCambiado(base[id], valores[id]),
+        })),
       );
       const guardadas = new Set(r.guardadas);
       setBase((b) => {
@@ -117,6 +152,8 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
         <span>Precio unidad</span>
         <span>Precio mayor</span>
         <span>Mín. mayor</span>
+        <span>Costo</span>
+        <span>Ganancia</span>
         <span>Oferta</span>
         <span>Precio oferta</span>
         <span>Disp.</span>
@@ -126,6 +163,7 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
         {filas.map((f, i) => {
           const v = valores[f.id];
           const sucia = modificados.includes(f.id);
+          const ganancia = textoGanancia(v);
           return (
             <li
               key={f.id}
@@ -147,6 +185,18 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
                 {campoTexto(f.id, i, "precio_unidad", "Precio unidad", "$")}
                 {campoTexto(f.id, i, "precio_mayor", "Precio por mayor", "$")}
                 {campoTexto(f.id, i, "cantidad_min_mayor", "Mínimo por mayor", "Cant.")}
+                {campoTexto(f.id, i, "costo", "Costo", "$ costo")}
+                <p
+                  className={`col-span-2 min-w-0 text-sm tabular-nums sm:col-span-3 lg:col-span-1 ${CLASE_MARGEN[ganancia.estado]}`}
+                >
+                  <span className="text-xs font-medium text-muted-foreground lg:sr-only">
+                    Ganancia:{" "}
+                  </span>
+                  {ganancia.texto}
+                  {ganancia.estado === "perdida" ? (
+                    <span className="block text-xs">Por debajo del costo</span>
+                  ) : null}
+                </p>
               </div>
               <div className="grid grid-cols-2 items-end gap-2 lg:contents">
                 <label className="flex min-h-10 items-center gap-2 text-sm font-medium">

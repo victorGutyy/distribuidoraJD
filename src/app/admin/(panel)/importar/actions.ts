@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { requerirRol } from "@/lib/auth";
 import {
-  COLUMNAS_CATALOGO,
+  COLUMNAS_IMPORTABLES,
   type ModoImportacion,
 } from "@/lib/importacion/columnas";
 import {
@@ -15,7 +15,9 @@ import {
 } from "@/lib/importacion/comparar";
 import {
   payloadCatalogo,
+  payloadCostos,
   payloadPrecios,
+  traePrecios,
   validarFilaCatalogo,
   validarFilaPrecios,
   type FilaCatalogo,
@@ -23,6 +25,7 @@ import {
 } from "@/lib/importacion/fila";
 import {
   aVarianteExistente,
+  SELECT_VARIANTE_CON_COSTOS,
   SELECT_VARIANTE_EXISTENTE,
   type FilaBD,
 } from "@/lib/importacion/leer-bd";
@@ -42,7 +45,7 @@ const entradaSchema = z.object({
     .array(
       z.object({
         fila: z.number().int().positive(),
-        datos: z.partialRecord(z.enum(COLUMNAS_CATALOGO), z.string().max(3000)),
+        datos: z.partialRecord(z.enum(COLUMNAS_IMPORTABLES), z.string().max(3000)),
       }),
     )
     .min(1)
@@ -66,16 +69,20 @@ export type ResultadoVistaPrevia = { error?: string; filas?: FilaVista[] };
 type ValidaCatalogo = { fila: number; ok: true; datos: FilaCatalogo };
 type ValidaPrecios = { fila: number; ok: true; datos: FilaPrecios };
 
-/** Trae las presentaciones guardadas con esos SKU (en grupos, por el largo de la URL). */
+/**
+ * Trae las presentaciones guardadas con esos SKU (en grupos, por el largo de la URL).
+ * `conCostos`: también el costo y las existencias actuales (modo "precios").
+ */
 async function presentacionesPorSku(
   skus: string[],
+  conCostos: boolean,
 ): Promise<Map<string, VarianteExistente> | null> {
   const supabase = await createClient();
   const encontradas = new Map<string, VarianteExistente>();
   for (let i = 0; i < skus.length; i += 100) {
     const { data, error } = await supabase
       .from("variantes")
-      .select(SELECT_VARIANTE_EXISTENTE)
+      .select(conCostos ? SELECT_VARIANTE_CON_COSTOS : SELECT_VARIANTE_EXISTENTE)
       .in("sku", skus.slice(i, i + 100));
     if (error) return null;
     for (const fila of (data ?? []) as unknown as FilaBD[]) {
@@ -122,7 +129,7 @@ export async function previsualizarImportacion(
   const skus = validas
     .map((v) => v.datos.sku)
     .filter((s): s is string => Boolean(s));
-  const existentes = await presentacionesPorSku([...new Set(skus)]);
+  const existentes = await presentacionesPorSku([...new Set(skus)], modo === "precios");
   if (!existentes) {
     return { error: "No pudimos consultar el catálogo. Inténtalo de nuevo." };
   }
@@ -158,6 +165,8 @@ export type ResultadoLote = {
   sinCambios: number;
   categoriasCreadas: number;
   marcasCreadas: number;
+  /** Presentaciones cuyo costo o existencias cambiaron (modo "precios"). */
+  costosActualizados: number;
   errores: { ref: string; mensaje: string }[];
 };
 
@@ -169,10 +178,20 @@ const loteVacio: ResultadoLote = {
   sinCambios: 0,
   categoriasCreadas: 0,
   marcasCreadas: 0,
+  costosActualizados: 0,
   errores: [],
 };
 
 const num = (v: unknown): number => (typeof v === "number" ? v : 0);
+
+/** Errores por fila que devuelven las funciones SQL: [{ sku | producto | ref, mensaje }]. */
+function erroresDeSql(r: Record<string, unknown>): ResultadoLote["errores"] {
+  const delSql = (Array.isArray(r.errores) ? r.errores : []) as Record<string, string>[];
+  return delSql.map((e) => ({
+    ref: e.sku || e.producto || e.ref || "(sin referencia)",
+    mensaje: e.mensaje ?? "Error desconocido",
+  }));
+}
 
 /**
  * Guarda un lote de filas (ya revisadas en la vista previa). Se valida DE NUEVO
@@ -189,53 +208,82 @@ export async function aplicarLoteImportacion(
   const { modo, filas } = parsed.data;
 
   const payload: Record<string, unknown>[] = [];
+  // Costo y existencias van a su propia función y tabla privada (RN-14).
+  const payloadDeCostos: Record<string, unknown>[] = [];
   const errores: ResultadoLote["errores"] = [];
   for (const { fila, datos } of filas) {
     if (modo === "precios") {
       const r = validarFilaPrecios(datos);
-      if (r.ok) payload.push(payloadPrecios(r.fila));
-      else errores.push({ ref: `fila ${fila}`, mensaje: r.errores.join("; ") });
+      if (r.ok) {
+        // Una fila que solo trae costo o existencias no pasa por guardar_precios
+        // (si pasara, contaría como "sin cambios" sin serlo).
+        if (traePrecios(r.fila)) payload.push(payloadPrecios(r.fila));
+        const costos = payloadCostos(r.fila);
+        if (costos) payloadDeCostos.push(costos);
+      } else errores.push({ ref: `fila ${fila}`, mensaje: r.errores.join("; ") });
     } else {
       const r = validarFilaCatalogo(datos);
       if (r.ok) payload.push(payloadCatalogo(r.fila));
       else errores.push({ ref: `fila ${fila}`, mensaje: r.errores.join("; ") });
     }
   }
-  if (payload.length === 0) return { ...loteVacio, errores };
-
-  const supabase = await createClient();
-  const rpc =
-    modo === "precios"
-      ? await supabase.rpc("guardar_precios", { p_filas: payload as Json })
-      : await supabase.rpc("importar_catalogo", { p_filas: payload as Json });
-  if (rpc.error) {
-    return {
-      ...loteVacio,
-      errores,
-      error:
-        rpc.error.code === "42501"
-          ? "No tienes permiso para importar."
-          : "No pudimos guardar este lote. Inténtalo de nuevo.",
-    };
+  if (payload.length === 0 && payloadDeCostos.length === 0) {
+    return { ...loteVacio, errores };
   }
 
-  invalidarTienda();
-  const r = (rpc.data ?? {}) as Record<string, unknown>;
-  const delSql = (Array.isArray(r.errores) ? r.errores : []) as Record<
-    string,
-    string
-  >[];
-  const erroresSql = delSql.map((e) => ({
-    ref: e.sku || e.producto || e.ref || "(sin referencia)",
-    mensaje: e.mensaje ?? "Error desconocido",
-  }));
+  const supabase = await createClient();
+  let r: Record<string, unknown> = {};
+  if (payload.length > 0) {
+    const rpc =
+      modo === "precios"
+        ? await supabase.rpc("guardar_precios", { p_filas: payload as Json })
+        : await supabase.rpc("importar_catalogo", { p_filas: payload as Json });
+    if (rpc.error) {
+      return {
+        ...loteVacio,
+        errores,
+        error:
+          rpc.error.code === "42501"
+            ? "No tienes permiso para importar."
+            : "No pudimos guardar este lote. Inténtalo de nuevo.",
+      };
+    }
+    invalidarTienda();
+    r = (rpc.data ?? {}) as Record<string, unknown>;
+  }
+  const erroresSql = erroresDeSql(r);
+
+  // Costos y existencias (solo modo "precios").
+  let costosActualizados = 0;
+  let erroresCostos: ResultadoLote["errores"] = [];
+  if (payloadDeCostos.length > 0) {
+    const rpcCostos = await supabase.rpc("guardar_costos", {
+      p_filas: payloadDeCostos as Json,
+    });
+    if (rpcCostos.error) {
+      return {
+        ...loteVacio,
+        variantesActualizadas: num(r.actualizadas),
+        sinCambios: num(r.sin_cambios),
+        errores: [...errores, ...erroresSql],
+        error:
+          rpcCostos.error.code === "42501"
+            ? "No tienes permiso para guardar costos."
+            : "Los precios se guardaron, pero no pudimos guardar los costos de este lote. Inténtalo de nuevo.",
+      };
+    }
+    const rc = (rpcCostos.data ?? {}) as Record<string, unknown>;
+    costosActualizados = num(rc.actualizadas);
+    erroresCostos = erroresDeSql(rc);
+  }
 
   return modo === "precios"
     ? {
         ...loteVacio,
         variantesActualizadas: num(r.actualizadas),
         sinCambios: num(r.sin_cambios),
-        errores: [...errores, ...erroresSql],
+        costosActualizados,
+        errores: [...errores, ...erroresSql, ...erroresCostos],
       }
     : {
         productosCreados: num(r.productos_creados),
@@ -245,6 +293,7 @@ export async function aplicarLoteImportacion(
         sinCambios: num(r.variantes_sin_cambios),
         categoriasCreadas: num(r.categorias_creadas),
         marcasCreadas: num(r.marcas_creadas),
+        costosActualizados: 0,
         errores: [...errores, ...erroresSql],
       };
 }

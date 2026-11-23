@@ -33,6 +33,7 @@ const sumar = (a: Resumen, b: ResultadoLote): Resumen => ({
   sinCambios: a.sinCambios + b.sinCambios,
   categoriasCreadas: a.categoriasCreadas + b.categoriasCreadas,
   marcasCreadas: a.marcasCreadas + b.marcasCreadas,
+  costosActualizados: a.costosActualizados + b.costosActualizados,
   errores: [...a.errores, ...b.errores],
 });
 
@@ -44,6 +45,7 @@ const resumenVacio = (omitidas: number): Resumen => ({
   sinCambios: 0,
   categoriasCreadas: 0,
   marcasCreadas: 0,
+  costosActualizados: 0,
   errores: [],
   omitidas,
   interrumpida: false,
@@ -166,7 +168,9 @@ export function useImportacion() {
       archivo,
       filasTotal: filas.length,
       creadas: acumulado.variantesCreadas,
-      actualizadas: acumulado.variantesActualizadas,
+      // Una presentación puede cambiar de precio Y de costo: el mayor de los dos es el
+      // mínimo de presentaciones tocadas (no se duplican en el historial).
+      actualizadas: Math.max(acumulado.variantesActualizadas, acumulado.costosActualizados),
       // El historial guarda máximo 2000 avisos, con textos cortos.
       errores: acumulado.errores.slice(0, 2000).map((e) => ({
         ref: e.ref.slice(0, 200),

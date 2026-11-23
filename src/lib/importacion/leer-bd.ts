@@ -13,10 +13,20 @@ export const SELECT_VARIANTE_EXISTENTE =
   "productos!inner(nombre, descripcion, etiquetas, activo, " +
   "marcas(nombre), categorias(nombre, padre:categorias!parent_id(nombre)))";
 
+/**
+ * Lo mismo, más el costo y las existencias (RF-32). SOLO para el modo "precios" y para
+ * admin/editor: la tabla `variante_costos` tiene RLS, así que otro rol recibiría vacío.
+ */
+export const SELECT_VARIANTE_CON_COSTOS =
+  SELECT_VARIANTE_EXISTENTE + ", variante_costos(costo, stock)";
+
 type Nombre = { nombre: string } | null;
+type CostosBD = { costo: number | null; stock: number | null };
 
 /** Forma (laxa) de lo que devuelve Supabase con SELECT_VARIANTE_EXISTENTE. */
 export type FilaBD = Omit<VarianteExistente, "producto"> & {
+  /** Objeto (relación 1 a 1), lista de un elemento o null, según como lo entregue PostgREST. */
+  variante_costos?: CostosBD | CostosBD[] | null;
   productos: {
     nombre: string;
     descripcion: string | null;
@@ -28,12 +38,17 @@ export type FilaBD = Omit<VarianteExistente, "producto"> & {
 };
 
 export function aVarianteExistente(fila: FilaBD): VarianteExistente {
-  const { productos: p, ...variante } = fila;
+  const { productos: p, variante_costos, ...variante } = fila;
+  const costos = Array.isArray(variante_costos) ? variante_costos[0] : variante_costos;
   const categoria = p.categorias;
   // Con padre: la categoría es el padre y la hija es la subcategoría.
   const padre = categoria?.padre ?? null;
   return {
     ...variante,
+    // Sin embed (otro modo) o sin fila de costos: no hay dato.
+    ...(variante_costos === undefined
+      ? {}
+      : { costo: costos?.costo ?? null, stock: costos?.stock ?? null }),
     producto: {
       nombre: p.nombre,
       descripcion: p.descripcion,

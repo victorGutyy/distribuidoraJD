@@ -4,8 +4,10 @@ import { Suspense } from "react";
 import { InsigniaEstado } from "@/components/admin/pedidos/InsigniaEstado";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requerirSeccion } from "@/lib/auth";
+import { formatPorcentaje, calcularGanancia } from "@/lib/costos";
 import { ahoraEnBogota } from "@/lib/entregas";
 import { formatCOP, formatFechaHora } from "@/lib/formato";
+import { inicioDelMes, leerResumenCostos } from "@/lib/inventario";
 import { ESTADOS_PENDIENTES, esEstadoPedido } from "@/lib/pedidos";
 import { ETIQUETA_ROL, SECCIONES, menuParaRol, puedeVer } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +31,7 @@ function Tarjeta({
   destacada = false,
 }: {
   titulo: string;
-  valor: number | null;
+  valor: number | string | null;
   ayuda: string;
   href: string;
   destacada?: boolean;
@@ -65,7 +67,7 @@ async function ContenidoInicio({ searchParams }: { searchParams: PageProps<"/adm
   const veFiltros = puedeVer(perfil.rol, "pedidos");
 
   const contar = (r: { count: number | null; error: unknown }) => (r.error ? null : (r.count ?? 0));
-  const [nuevosHoy, pendientes, sinPrecio, sinImagen, ultimos] = await Promise.all([
+  const [nuevosHoy, pendientes, sinPrecio, sinImagen, ultimos, costosBD] = await Promise.all([
     supabase
       .from("v_pedidos_admin")
       .select("id", { count: "exact", head: true })
@@ -86,7 +88,15 @@ async function ContenidoInicio({ searchParams }: { searchParams: PageProps<"/adm
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(10),
+    // Ganancia del mes y valor del inventario (RF-32): privados, solo admin y editor.
+    veCatalogo
+      ? supabase.rpc("resumen_costos", { p_desde: inicioDelMes(hoy) })
+      : Promise.resolve({ data: null, error: null }),
   ]);
+  const costos = veCatalogo && !costosBD.error ? leerResumenCostos(costosBD.data) : null;
+  const margenMes = costos
+    ? calcularGanancia(costos.pedidos.ventaConCosto, costos.pedidos.ventaConCosto - costos.pedidos.ganancia)
+    : null;
 
   const pendientesDeConstruir = menuParaRol(perfil.rol).filter((i) => !i.disponible);
 
@@ -136,6 +146,28 @@ async function ContenidoInicio({ searchParams }: { searchParams: PageProps<"/adm
           </>
         ) : null}
       </section>
+
+      {costos ? (
+        <section aria-label="Ganancia e inventario" className="grid gap-3 sm:grid-cols-2">
+          <Tarjeta
+            titulo="Ganancia del mes"
+            valor={formatCOP(costos.pedidos.ganancia)}
+            ayuda={
+              `${costos.pedidos.cantidad} ${costos.pedidos.cantidad === 1 ? "pedido" : "pedidos"}` +
+              (margenMes ? ` · margen ${formatPorcentaje(margenMes.margenPct)}` : "") +
+              (costos.pedidos.lineasSinCosto > 0 ? ` · ${costos.pedidos.lineasSinCosto} líneas sin costo` : "") +
+              " · sin envíos ni cancelados"
+            }
+            href="/admin/pedidos"
+          />
+          <Tarjeta
+            titulo="Valor del inventario"
+            valor={formatCOP(costos.inventario.valor)}
+            ayuda={`${costos.inventario.sinStock} sin stock · ${costos.inventario.negativos} negativos`}
+            href="/admin/inventario"
+          />
+        </section>
+      ) : null}
 
       {veFiltros ? (
         <Card>

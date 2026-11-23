@@ -49,10 +49,14 @@ export async function guardarPreciosRapido(
 
   const errores: ResultadoPrecios["errores"] = [];
   const payload: Record<string, unknown>[] = [];
+  // Costo (RF-32, privado): va a su propia función y SOLO de las filas cuyo costo cambió.
+  const payloadCostos: Record<string, unknown>[] = [];
   for (const fila of entrada) {
     const r = edicionPrecioSchema.safeParse(fila);
     if (r.success) {
-      payload.push(r.data); // todas las claves viajan: un null BORRA el dato
+      const { costo, costo_modificado, ...precios } = r.data;
+      payload.push(precios); // todas las claves viajan: un null BORRA el dato
+      if (costo_modificado) payloadCostos.push({ id: precios.id, costo });
     } else {
       const id = Number((fila as { id?: unknown })?.id);
       errores.push({
@@ -84,11 +88,31 @@ export async function guardarPreciosRapido(
     id: Number(e.ref),
     mensaje: mensajeDeFila(e.mensaje),
   }));
-  const idsFallidos = new Set([...errores, ...fallidas].map((e) => e.id));
+
+  // Los costos, aparte. Si esta llamada falla entera, los precios YA quedaron guardados:
+  // las filas con costo cambiado no se marcan como guardadas para que no se pierda el aviso.
+  let fallidasCostos: ResultadoPrecios["errores"] = [];
+  let errorCostos: string | undefined;
+  if (payloadCostos.length > 0) {
+    const rc = await supabase.rpc("guardar_costos", { p_filas: payloadCostos as Json });
+    if (rc.error) {
+      errorCostos =
+        rc.error.code === "42501"
+          ? "No tienes permiso para cambiar costos."
+          : "Los precios se guardaron, pero no pudimos guardar los costos. Inténtalo de nuevo.";
+    } else {
+      const delSql = ((rc.data ?? {}) as { errores?: { ref: string; mensaje: string }[] }).errores ?? [];
+      fallidasCostos = delSql.map((e) => ({ id: Number(e.ref), mensaje: "No se pudo guardar el costo de esta fila." }));
+    }
+  }
+
+  const idsFallidos = new Set([...errores, ...fallidas, ...fallidasCostos].map((e) => e.id));
+  const idsCostosSinGuardar = errorCostos ? new Set(payloadCostos.map((p) => p.id as number)) : new Set<number>();
   return {
+    ...(errorCostos ? { error: errorCostos } : {}),
     guardadas: payload
       .map((p) => p.id as number)
-      .filter((id) => !idsFallidos.has(id)),
-    errores: [...errores, ...fallidas],
+      .filter((id) => !idsFallidos.has(id) && !idsCostosSinGuardar.has(id)),
+    errores: [...errores, ...fallidas, ...fallidasCostos],
   };
 }

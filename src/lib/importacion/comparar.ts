@@ -23,6 +23,9 @@ export type VarianteExistente = {
   precio_oferta: number | null;
   disponible: boolean;
   activo: boolean;
+  /** Privados (RN-14): solo se cargan para admin y editor, y solo en el modo "precios". */
+  costo?: number | null;
+  stock?: number | null;
   producto: {
     nombre: string;
     descripcion: string | null;
@@ -70,7 +73,9 @@ function cambiosDePrecios(
     | "en_oferta"
     | "precio_oferta"
     | "disponible"
-  >,
+  > &
+    // El modo "catálogo" no trae costo ni existencias: ahí cuentan como vacíos.
+    Partial<Pick<FilaPrecios, "costo" | "stock">>,
   actual: VarianteExistente,
 ): Cambio[] {
   const c: Cambio[] = [];
@@ -85,6 +90,8 @@ function cambiosDePrecios(
   diferencia(c, "en_oferta", actual.en_oferta, fila.en_oferta);
   diferencia(c, "precio_oferta", actual.precio_oferta, fila.precio_oferta);
   diferencia(c, "disponible", actual.disponible, fila.disponible);
+  diferencia(c, "costo", actual.costo ?? null, fila.costo ?? null);
+  diferencia(c, "stock", actual.stock ?? null, fila.stock ?? null);
   return c;
 }
 

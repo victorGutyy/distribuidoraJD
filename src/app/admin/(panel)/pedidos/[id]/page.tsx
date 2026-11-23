@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AccionesPedido } from "@/components/admin/pedidos/AccionesPedido";
 import { EditorItemsPedido } from "@/components/admin/pedidos/EditorItemsPedido";
+import { GananciaPedido } from "@/components/admin/pedidos/GananciaPedido";
 import { InsigniaEstado } from "@/components/admin/pedidos/InsigniaEstado";
 import { textoZona } from "@/components/admin/pedidos/TablaPedidos";
 import { buttonVariants } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   puedeCambiarEstado,
   puedeEditarItems,
 } from "@/lib/pedidos";
+import { puedeVer } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import { enlaceWhatsApp } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -57,7 +59,9 @@ async function ContenidoPedido({ params }: { params: Props["params"] }) {
   if (!p || p.id === null || !p.estado || !esEstadoPedido(p.estado)) notFound();
   const estado = p.estado;
 
-  const [{ data: cliente }, { data: perfiles }] = await Promise.all([
+  // Costos y ganancia (RF-32): solo admin y editor. Para el vendedor ni se consulta (y RLS no los daría).
+  const veCostos = puedeVer(perfil.rol, "inventario");
+  const [{ data: cliente }, { data: perfiles }, { data: ganancia }] = await Promise.all([
     p.cliente_id
       ? supabase.from("clientes").select("documento, referencia").eq("id", p.cliente_id).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -65,6 +69,9 @@ async function ContenidoPedido({ params }: { params: Props["params"] }) {
     perfil.rol === "admin"
       ? supabase.from("perfiles").select("id, nombre")
       : Promise.resolve({ data: [] as { id: string; nombre: string }[] }),
+    veCostos
+      ? supabase.from("v_ganancia_pedidos").select("*").eq("pedido_id", id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
   const nombreDe = new Map((perfiles ?? []).map((x) => [x.id, x.nombre]));
 
@@ -130,6 +137,16 @@ async function ContenidoPedido({ params }: { params: Props["params"] }) {
               </dl>
             </CardContent>
           </Card>
+
+          {veCostos && ganancia ? (
+            <GananciaPedido
+              ventaItems={ganancia.venta_items ?? 0}
+              costoItems={ganancia.costo_items ?? 0}
+              gananciaItems={ganancia.ganancia_items ?? 0}
+              itemsSinCosto={ganancia.items_sin_costo ?? 0}
+              cancelado={estado === "cancelado"}
+            />
+          ) : null}
 
           <div className="grid gap-5 md:grid-cols-2">
             <Card>

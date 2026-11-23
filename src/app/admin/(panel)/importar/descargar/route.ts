@@ -10,6 +10,7 @@ import {
 } from "@/lib/importacion/exportar";
 import {
   aVarianteExistente,
+  SELECT_VARIANTE_CON_COSTOS,
   SELECT_VARIANTE_EXISTENTE,
   type FilaBD,
 } from "@/lib/importacion/leer-bd";
@@ -26,13 +27,14 @@ import { createClient } from "@/lib/supabase/server";
 
 const POR_PAGINA = 1000; // PostgREST devuelve como máximo 1000 filas por consulta
 
-async function leerTodasLasPresentaciones() {
+/** `conCostos`: solo para el archivo de precios (el catálogo se descarga sin datos privados). */
+async function leerTodasLasPresentaciones(conCostos: boolean) {
   const supabase = await createClient();
   const todas = [];
   for (let desde = 0; ; desde += POR_PAGINA) {
     const { data, error } = await supabase
       .from("variantes")
-      .select(SELECT_VARIANTE_EXISTENTE)
+      .select(conCostos ? SELECT_VARIANTE_CON_COSTOS : SELECT_VARIANTE_EXISTENTE)
       .order("id")
       .range(desde, desde + POR_PAGINA - 1);
     if (error) return null;
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
     tabla = [[...COLUMNAS_CATALOGO], ...FILAS_EJEMPLO];
     base = "plantilla-importacion-ev";
   } else if (tipo === "catalogo" || tipo === "precios") {
-    const presentaciones = await leerTodasLasPresentaciones();
+    const presentaciones = await leerTodasLasPresentaciones(tipo === "precios");
     if (!presentaciones) {
       return new Response("No pudimos leer el catálogo.", { status: 500 });
     }

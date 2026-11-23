@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aFilaPrecio,
+  costoCambiado,
   filaCambiada,
   idsModificados,
   valoresDesdeFila,
@@ -20,6 +21,7 @@ const fila: FilaPrecio = {
   en_oferta: false,
   precio_oferta: null,
   disponible: true,
+  costo: 2800,
 };
 
 describe("valoresDesdeFila y filaCambiada", () => {
@@ -50,6 +52,41 @@ describe("valoresDesdeFila y filaCambiada", () => {
   });
 });
 
+describe("costo en la cuadrícula (RF-32)", () => {
+  it("el costo sin dato queda como texto vacío y el guardado como número", () => {
+    expect(valoresDesdeFila({ ...fila, costo: null }).costo).toBe("");
+    expect(valoresDesdeFila(fila).costo).toBe("2800");
+  });
+
+  it("cambiar el costo marca la fila como modificada; escribirlo igual de otra forma, no", () => {
+    const base = valoresDesdeFila(fila);
+    expect(filaCambiada(base, { ...base, costo: "3000" })).toBe(true);
+    expect(filaCambiada(base, { ...base, costo: "2.800" })).toBe(false);
+    expect(filaCambiada(base, { ...base, costo: "" })).toBe(true); // quitar el costo
+  });
+
+  it("costoCambiado separa el costo del resto: cambiar solo el precio NO toca la tabla privada", () => {
+    const base = valoresDesdeFila(fila);
+    expect(costoCambiado(base, { ...base, precio_unidad: "3500" })).toBe(false);
+    expect(costoCambiado(base, { ...base, costo: "3000" })).toBe(true);
+    expect(costoCambiado(base, { ...base, costo: " 2800 " })).toBe(false);
+  });
+
+  it("el esquema acepta el costo como pesos enteros y lo vacío como null", () => {
+    const ok = {
+      id: 7, precio_unidad: "3200", precio_mayor: "", cantidad_min_mayor: "",
+      en_oferta: false, precio_oferta: "", disponible: true,
+    };
+    const r = edicionPrecioSchema.safeParse({ ...ok, costo: "2.800", costo_modificado: true });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data).toMatchObject({ costo: 2800, costo_modificado: true });
+    const vacio = edicionPrecioSchema.safeParse({ ...ok, costo: "", costo_modificado: true });
+    if (vacio.success) expect(vacio.data.costo).toBeNull();
+    expect(edicionPrecioSchema.safeParse({ ...ok, costo: "12,5", costo_modificado: true }).success).toBe(false);
+    expect(edicionPrecioSchema.safeParse({ ...ok, costo: "2800" }).success).toBe(false); // falta costo_modificado
+  });
+});
+
 describe("aFilaPrecio", () => {
   it("descarta filas sin id o sin SKU y pone valores por defecto", () => {
     const v = {
@@ -61,6 +98,8 @@ describe("aFilaPrecio", () => {
     expect(r?.en_oferta).toBe(false);
     expect(r?.disponible).toBe(true);
     expect(aFilaPrecio({ ...v, id: null } as never)).toBeNull();
+    expect(r?.costo).toBeNull();
+    expect(aFilaPrecio(v as never, 2800)?.costo).toBe(2800);
   });
 });
 
@@ -68,6 +107,7 @@ describe("edicionPrecioSchema (editor rápido)", () => {
   const ok = {
     id: 7, precio_unidad: "3.200", precio_mayor: "3000", cantidad_min_mayor: "12",
     en_oferta: false, precio_oferta: "", disponible: true,
+    costo: "", costo_modificado: false,
   };
 
   it("convierte el texto a números y lo vacío a null (borra el dato)", () => {

@@ -74,7 +74,14 @@ async function ContenidoPrecios({ searchParams }: { searchParams: Params }) {
     redirect(urlLista("/admin/precios", filtros, { pagina: pagina.actual }));
   }
 
-  const filas = (data ?? []).flatMap((v) => aFilaPrecio(v) ?? []);
+  // Costos (privados, RN-14): tabla aparte. Esta pantalla es solo de admin y editor.
+  const ids = (data ?? []).flatMap((v) => (v.id === null ? [] : [v.id]));
+  const { data: costosBD } =
+    ids.length > 0
+      ? await supabase.from("variante_costos").select("variante_id, costo").in("variante_id", ids)
+      : { data: [] };
+  const costoDe = new Map((costosBD ?? []).map((c) => [c.variante_id, c.costo]));
+  const filas = (data ?? []).flatMap((v) => aFilaPrecio(v, costoDe.get(v.id ?? -1) ?? null) ?? []);
   const hayFiltros =
     filtros.q !== "" || filtros.categoria !== null || filtros.marca !== null || filtros.sinPrecio;
 
@@ -84,9 +91,9 @@ async function ContenidoPrecios({ searchParams }: { searchParams: Params }) {
         <h1 className="text-2xl font-bold tracking-tight">Precios</h1>
         <p className="text-muted-foreground">
           {total} {total === 1 ? "presentación" : "presentaciones"}
-          {hayFiltros ? " con estos filtros" : ""}. Escribe los precios y guarda
-          todo junto; con Enter bajas a la fila siguiente. Un producto sin precio
-          no se ve en la tienda.
+          {hayFiltros ? " con estos filtros" : ""}. Escribe los precios y el costo
+          y guarda todo junto; con Enter bajas a la fila siguiente. La ganancia se
+          calcula sola. Un producto sin precio no se ve en la tienda.
         </p>
       </header>
 

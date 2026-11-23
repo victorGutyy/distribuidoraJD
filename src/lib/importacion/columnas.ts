@@ -31,6 +31,12 @@ export const COLUMNAS_CATALOGO = [
 ] as const;
 
 /**
+ * Costo y existencias (RF-32). Solo existen en el modo "precios": son datos privados
+ * (RN-14) que no van en la plantilla ni en la copia del catálogo.
+ */
+export const COLUMNAS_COSTOS = ["costo", "stock"] as const;
+
+/**
  * Columnas del archivo de precios. `producto` y `presentacion` solo ayudan a
  * reconocer la fila en Excel: al importar se ignoran, manda el SKU.
  */
@@ -44,18 +50,27 @@ export const COLUMNAS_PRECIOS = [
   "en_oferta",
   "precio_oferta",
   "disponible",
+  ...COLUMNAS_COSTOS,
 ] as const;
 
 export type ColumnaCatalogo = (typeof COLUMNAS_CATALOGO)[number];
+export type ColumnaCostos = (typeof COLUMNAS_COSTOS)[number];
+/** Cualquier columna que un archivo de importación puede traer. */
+export type ColumnaImportacion = ColumnaCatalogo | ColumnaCostos;
+/** Lista de todas las columnas posibles (para validar lo que llega al servidor). */
+export const COLUMNAS_IMPORTABLES = [
+  ...COLUMNAS_CATALOGO,
+  ...COLUMNAS_COSTOS,
+] as const;
 export type ModoImportacion = "catalogo" | "precios";
 
 /** Una fila tal como viene del archivo: todo texto, sin interpretar. */
-export type FilaCruda = Partial<Record<ColumnaCatalogo, string>>;
+export type FilaCruda = Partial<Record<ColumnaImportacion, string>>;
 
 /** Una fila cruda más el número de fila que tenía en el archivo (para los avisos). */
 export type FilaConNumero = { fila: number; datos: FilaCruda };
 
-export function columnasDelModo(modo: ModoImportacion): readonly ColumnaCatalogo[] {
+export function columnasDelModo(modo: ModoImportacion): readonly ColumnaImportacion[] {
   return modo === "precios" ? COLUMNAS_PRECIOS : COLUMNAS_CATALOGO;
 }
 
@@ -70,7 +85,12 @@ export function normalizarEncabezado(texto: string): string {
 }
 
 /** Nombres alternativos que la gente suele escribir en Excel. */
-const ALIAS: Record<string, ColumnaCatalogo> = {
+const ALIAS: Record<string, ColumnaImportacion> = {
+  precio_costo: "costo",
+  costo_unitario: "costo",
+  inventario: "stock",
+  existencias: "stock",
+  existencia: "stock",
   codigo: "sku",
   referencia: "sku",
   nombre: "producto",
@@ -98,13 +118,13 @@ const ALIAS: Record<string, ColumnaCatalogo> = {
 /** ¿A qué columna conocida corresponde este encabezado? null si a ninguna. */
 export function columnaDeEncabezado(
   encabezado: string,
-  permitidas: readonly ColumnaCatalogo[],
-): ColumnaCatalogo | null {
+  permitidas: readonly ColumnaImportacion[],
+): ColumnaImportacion | null {
   const limpio = normalizarEncabezado(encabezado);
   if (!limpio) return null;
   const candidata =
-    (COLUMNAS_CATALOGO as readonly string[]).includes(limpio)
-      ? (limpio as ColumnaCatalogo)
+    (COLUMNAS_IMPORTABLES as readonly string[]).includes(limpio)
+      ? (limpio as ColumnaImportacion)
       : ALIAS[limpio];
   return candidata && permitidas.includes(candidata) ? candidata : null;
 }
@@ -114,10 +134,10 @@ export type LecturaTabla = {
   /** Encabezados del archivo que no se reconocieron (se ignoran). */
   ignoradas: string[];
   /** Columnas obligatorias que faltan en el archivo. */
-  faltantes: ColumnaCatalogo[];
+  faltantes: ColumnaImportacion[];
 };
 
-const OBLIGATORIAS: Record<ModoImportacion, readonly ColumnaCatalogo[]> = {
+const OBLIGATORIAS: Record<ModoImportacion, readonly ColumnaImportacion[]> = {
   catalogo: ["producto", "categoria"],
   precios: ["sku"],
 };

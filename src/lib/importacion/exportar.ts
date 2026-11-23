@@ -1,7 +1,7 @@
 import {
   COLUMNAS_CATALOGO,
   COLUMNAS_PRECIOS,
-  type ColumnaCatalogo,
+  type ColumnaImportacion,
   type ModoImportacion,
 } from "@/lib/importacion/columnas";
 import type { VarianteExistente } from "@/lib/importacion/comparar";
@@ -17,7 +17,7 @@ export type Celda = string | number | null;
 const sino = (v: boolean) => (v ? "si" : "no");
 
 /** Valor de una columna para una presentación guardada. */
-function celda(v: VarianteExistente, columna: ColumnaCatalogo): Celda {
+function celda(v: VarianteExistente, columna: ColumnaImportacion): Celda {
   const p = v.producto;
   switch (columna) {
     case "sku":
@@ -61,6 +61,11 @@ function celda(v: VarianteExistente, columna: ColumnaCatalogo): Celda {
       return sino(v.activo);
     case "pagina_pdf":
       return null;
+    // Privados (RN-14): solo vienen en el archivo de precios y si quien descarga puede verlos.
+    case "costo":
+      return v.costo ?? null;
+    case "stock":
+      return v.stock ?? null;
   }
 }
 

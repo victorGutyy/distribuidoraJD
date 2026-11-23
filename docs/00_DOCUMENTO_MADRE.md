@@ -79,7 +79,7 @@ El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Est
 |---|---|
 | 2 | Devoluciones de productos defectuosos ligadas al pedido, con confirmación (la base de datos se deja preparada desde el MVP) |
 | 2 | Cuenta de cliente con historial y opción de "repetir pedido" |
-| 2 | Control de inventario y existencias |
+| 2 | Control de inventario **automático**: descontar stock al despachar pedidos, historial de movimientos y "agotado" automático. *(Los costos, la ganancia y el stock **informativo** se adelantaron al MVP: ver RF-32.)* |
 | 3 | Reportes de ventas, productos más pedidos y clientes por sector |
 | 3 | App o PWA para vendedores con toma de pedidos en ruta |
 | 3 | Pagos en línea (Nequi, PSE, Wompi) |

@@ -23,6 +23,9 @@ export const edicionPrecioSchema = z
     en_oferta: z.boolean(),
     precio_oferta: pesosOpc,
     disponible: z.boolean(),
+    // Costo (RF-32): vacío = quitarlo, pero SOLO si `costo_modificado` es true; si no, no se toca.
+    costo: pesosOpc,
+    costo_modificado: z.boolean(),
   })
   .superRefine(reglasDePreciosVariante);
 

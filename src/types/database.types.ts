@@ -380,6 +380,29 @@ export type Database = {
           },
         ]
       }
+      pedido_item_costos: {
+        Row: {
+          costo: number | null
+          pedido_item_id: number
+        }
+        Insert: {
+          costo?: number | null
+          pedido_item_id: number
+        }
+        Update: {
+          costo?: number | null
+          pedido_item_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_item_costos_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: true
+            referencedRelation: "pedido_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           cliente_id: number
@@ -642,6 +665,38 @@ export type Database = {
           },
         ]
       }
+      variante_costos: {
+        Row: {
+          costo: number | null
+          stock: number | null
+          stock_actualizado_at: string | null
+          updated_at: string
+          variante_id: number
+        }
+        Insert: {
+          costo?: number | null
+          stock?: number | null
+          stock_actualizado_at?: string | null
+          updated_at?: string
+          variante_id: number
+        }
+        Update: {
+          costo?: number | null
+          stock?: number | null
+          stock_actualizado_at?: string | null
+          updated_at?: string
+          variante_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variante_costos_variante_id_fkey"
+            columns: ["variante_id"]
+            isOneToOne: true
+            referencedRelation: "variantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       variantes: {
         Row: {
           activo: boolean
@@ -777,6 +832,37 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_ganancia_pedidos: {
+        Row: {
+          costo_items: number | null
+          ganancia_items: number | null
+          items_sin_costo: number | null
+          pedido_id: number | null
+          venta_items: number | null
+        }
+        Relationships: []
+      }
+      v_inventario_admin: {
+        Row: {
+          activo: boolean | null
+          categoria_nombre: string | null
+          costo: number | null
+          ganancia_unitaria: number | null
+          marca_nombre: string | null
+          margen_pct: number | null
+          precio_unidad: number | null
+          presentacion: string | null
+          producto_id: number | null
+          producto_nombre: string | null
+          sku: string | null
+          stock: number | null
+          stock_actualizado_at: string | null
+          texto_busqueda: string | null
+          valor_inventario: number | null
+          variante_id: number | null
+        }
+        Relationships: []
       }
       v_pedidos_admin: {
         Row: {
@@ -991,6 +1077,8 @@ export type Database = {
         }[]
       }
       f_unaccent: { Args: { texto: string }; Returns: string }
+      guardar_costos: { Args: { p_filas: Json }; Returns: Json }
+      resumen_costos: { Args: { p_desde: string }; Returns: Json }
       guardar_precios: { Args: { p_filas: Json }; Returns: Json }
       guardar_producto: {
         Args: { p_producto: Json; p_variantes: Json }

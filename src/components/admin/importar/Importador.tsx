@@ -26,7 +26,8 @@ const MODOS: { valor: ModoImportacion; titulo: string; texto: string }[] = [
   {
     valor: "precios",
     titulo: "Solo precios",
-    texto: "Cambia precios, ofertas y disponibilidad por SKU. No crea nada.",
+    texto:
+      "Cambia precios, costos, existencias, ofertas y disponibilidad por SKU. No crea nada.",
   },
 ];
 
@@ -195,6 +196,9 @@ export function Importador() {
                 </>
               ) : null}
               <li>Presentaciones actualizadas: <b>{imp.resumen.variantesActualizadas}</b></li>
+              {imp.modo === "precios" ? (
+                <li>Costos o existencias actualizados: <b>{imp.resumen.costosActualizados}</b></li>
+              ) : null}
               <li>Sin cambios: <b>{imp.resumen.sinCambios + imp.resumen.omitidas}</b></li>
             </ul>
             {imp.error ? <AvisoError>{imp.error}</AvisoError> : null}

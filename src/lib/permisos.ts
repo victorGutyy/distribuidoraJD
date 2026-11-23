@@ -24,6 +24,7 @@ export type Seccion =
   | "categorias"
   | "marcas"
   | "precios"
+  | "inventario"
   | "importar"
   | "banners"
   | "pedidos"
@@ -79,6 +80,14 @@ export const SECCIONES: Record<Seccion, DefSeccion> = {
     disponible: true,
     fase: "F3",
   },
+  inventario: {
+    etiqueta: "Inventario",
+    href: "/admin/inventario",
+    // Costos y existencias son privados (RN-14): solo admin y editor.
+    roles: ["admin", "editor"],
+    disponible: true,
+    fase: "RF-32",
+  },
   importar: {
     etiqueta: "Importar",
     href: "/admin/importar",
@@ -131,6 +140,7 @@ const ORDEN_MENU: readonly Seccion[] = [
   "categorias",
   "marcas",
   "precios",
+  "inventario",
   "importar",
   "banners",
   "zonas",

@@ -1,9 +1,10 @@
 import { z } from "zod";
 import {
-  COLUMNAS_CATALOGO,
+  COLUMNAS_IMPORTABLES,
   type FilaCruda,
   type ModoImportacion,
 } from "@/lib/importacion/columnas";
+import { parsearEnteroConSigno } from "@/lib/numeros";
 import { normalizarClave } from "@/lib/importacion/texto";
 import { UNIDADES_CONTENIDO, UNIDADES_VENTA } from "@/lib/catalogo/producto-form";
 import {
@@ -93,6 +94,22 @@ function reglasDePrecios(
 
 const CANTIDAD_MIN = "Escribe un número entero de 1 en adelante";
 
+/**
+ * Existencias: entero que puede ser NEGATIVO (el sistema contable del negocio lo permite)
+ * y llevar punto de miles. Vacío = no tocar.
+ */
+const STOCK_MIN = -1_000_000;
+const STOCK_MAX = 100_000_000;
+const stockOpc = z
+  .string()
+  .trim()
+  .refine((v) => {
+    if (v === "") return true;
+    const n = parsearEnteroConSigno(v);
+    return n !== null && n >= STOCK_MIN && n <= STOCK_MAX;
+  }, "Escribe un número entero (puede ser negativo), sin decimales")
+  .transform((v) => (v === "" ? null : (parsearEnteroConSigno(v) as number)));
+
 const filaCatalogoSchema = z
   .object({
     sku: skuOpc,
@@ -151,6 +168,9 @@ const filaPreciosSchema = z
     en_oferta: booleanoOpc,
     precio_oferta: pesosOpc,
     disponible: booleanoOpc,
+    // Privados (RN-14): solo en el modo "precios", que ya exige rol admin o editor.
+    costo: pesosOpc,
+    stock: stockOpc,
   })
   .superRefine(reglasDePrecios);
 
@@ -173,7 +193,7 @@ function resultado<T>(r: z.ZodSafeParseResult<T>): Validacion<T> {
 /** Las celdas que no vinieron en el archivo cuentan como vacías. */
 function completa(cruda: FilaCruda): Record<string, string> {
   return Object.fromEntries(
-    COLUMNAS_CATALOGO.map((c) => [c, cruda[c] ?? ""]),
+    COLUMNAS_IMPORTABLES.map((c) => [c, cruda[c] ?? ""]),
   );
 }
 
@@ -211,7 +231,25 @@ export function payloadCatalogo(fila: FilaCatalogo): Record<string, unknown> {
   return sinVacios({ ...fila, pagina_pdf: null });
 }
 
-/** Cuerpo de una fila para `guardar_precios`. */
+/** Cuerpo de una fila para `guardar_precios` (sin el costo ni las existencias). */
 export function payloadPrecios(fila: FilaPrecios): Record<string, unknown> {
-  return sinVacios(fila);
+  return sinVacios({ ...fila, costo: null, stock: null });
+}
+
+/** ¿La fila trae algún precio, oferta o disponibilidad? Si no, no hace falta llamar a guardar_precios. */
+export function traePrecios(fila: FilaPrecios): boolean {
+  return (
+    fila.precio_unidad !== null ||
+    fila.precio_mayor !== null ||
+    fila.cantidad_min_mayor !== null ||
+    fila.en_oferta !== null ||
+    fila.precio_oferta !== null ||
+    fila.disponible !== null
+  );
+}
+
+/** Cuerpo de una fila para `guardar_costos`; null si la fila no trae costo ni existencias. */
+export function payloadCostos(fila: FilaPrecios): Record<string, unknown> | null {
+  if (fila.costo === null && fila.stock === null) return null;
+  return sinVacios({ sku: fila.sku, costo: fila.costo, stock: fila.stock });
 }

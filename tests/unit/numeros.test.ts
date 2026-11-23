@@ -1,5 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { parsearDecimal, parsearEntero, parsearPesos } from "@/lib/numeros";
+import { parsearDecimal, parsearEntero, parsearEnteroConSigno, parsearPesos } from "@/lib/numeros";
+
+describe("parsearEnteroConSigno (existencias)", () => {
+  it("acepta positivos, cero y negativos", () => {
+    expect(parsearEnteroConSigno("66")).toBe(66);
+    expect(parsearEnteroConSigno("0")).toBe(0);
+    expect(parsearEnteroConSigno("-17")).toBe(-17);
+  });
+  it("acepta punto de miles", () => {
+    expect(parsearEnteroConSigno("1.672")).toBe(1672);
+    expect(parsearEnteroConSigno("-1.672")).toBe(-1672);
+  });
+  it("rechaza decimales, grupos mal puestos y texto", () => {
+    expect(parsearEnteroConSigno("1.5")).toBeNull();
+    expect(parsearEnteroConSigno("1,5")).toBeNull();
+    expect(parsearEnteroConSigno("1.23")).toBeNull();
+    expect(parsearEnteroConSigno("abc")).toBeNull();
+    expect(parsearEnteroConSigno("--3")).toBeNull();
+    expect(parsearEnteroConSigno("")).toBeNull();
+  });
+});
 
 describe("parsearPesos", () => {
   it("lee enteros simples y con separador de miles", () => {

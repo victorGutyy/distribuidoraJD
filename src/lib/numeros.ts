@@ -26,6 +26,19 @@ export function parsearEntero(texto: string): number | null {
 }
 
 /**
+ * Entero que puede ser NEGATIVO y llevar punto de miles ("-2", "1672", "1.672").
+ * Para existencias: el sistema contable del negocio permite saldos negativos.
+ * El punto solo vale como separador de miles (grupos de 3 dígitos); no admite decimales.
+ */
+export function parsearEnteroConSigno(texto: string): number | null {
+  const limpio = texto.replace(/\s/g, "");
+  const m = /^(-?)(\d+|\d{1,3}(?:\.\d{3})+)$/.exec(limpio);
+  if (!m) return null;
+  const n = Number(m[2].replace(/\./g, ""));
+  return m[1] ? -n : n;
+}
+
+/**
  * Decimal positivo con coma o punto ("0,5", "0.5", "250"). Para contenido y
  * medidas (no para precios).
  */

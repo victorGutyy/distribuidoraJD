@@ -13,7 +13,9 @@ import {
 import { tablaDeExportacion } from "@/lib/importacion/exportar";
 import {
   payloadCatalogo,
+  payloadCostos,
   payloadPrecios,
+  traePrecios,
   validarFilaCatalogo,
   validarFilaPrecios,
 } from "@/lib/importacion/fila";
@@ -346,5 +348,130 @@ describe("lectura de la base y exportación", () => {
     const tabla = tablaDeExportacion([aVarianteExistente(bd)], "precios");
     expect(tabla[0]).toContain("precio_unidad");
     expect(tabla[0]).not.toContain("categoria");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Costos y existencias (RF-32): solo en el modo "precios"
+// ---------------------------------------------------------------------------
+describe("costo y existencias en la importación de precios", () => {
+  const tabla = [
+    ["SKU", "Costo", "Inventario", "Precio unidad"],
+    ["EVC-00001-01", "9081", "66", "10042"],
+  ];
+
+  it("el modo precios reconoce costo e inventario (también con alias)", () => {
+    const r = leerTabla(tabla, "precios");
+    expect(r.ignoradas).toEqual([]);
+    expect(r.filas[0].datos).toMatchObject({ sku: "EVC-00001-01", costo: "9081", stock: "66" });
+    expect(columnaDeEncabezado("Existencias", ["stock"])).toBe("stock");
+    expect(columnaDeEncabezado("Precio costo", ["costo"])).toBe("costo");
+  });
+
+  it("el modo catálogo los IGNORA: son datos privados que no van en esa plantilla", () => {
+    const r = leerTabla(tabla, "catalogo");
+    expect(r.ignoradas).toEqual(expect.arrayContaining(["Costo", "Inventario"]));
+  });
+
+  it("valida el costo como pesos enteros y el stock como entero con signo", () => {
+    const ok = validarFilaPrecios({ sku: "A-1", costo: "9.081", stock: "-2" });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.fila).toMatchObject({ costo: 9081, stock: -2 });
+    const miles = validarFilaPrecios({ sku: "A-1", stock: "1.672" });
+    if (miles.ok) expect(miles.fila.stock).toBe(1672);
+    expect(validarFilaPrecios({ sku: "A-1", stock: "1,5" }).ok).toBe(false);
+    expect(validarFilaPrecios({ sku: "A-1", costo: "12,5" }).ok).toBe(false);
+    expect(validarFilaPrecios({ sku: "A-1", stock: "100000001" }).ok).toBe(false);
+  });
+
+  it("stock 0 es un dato válido (no se confunde con vacío)", () => {
+    const r = validarFilaPrecios({ sku: "A-1", stock: "0" });
+    if (!r.ok) throw new Error("válida");
+    expect(r.fila.stock).toBe(0);
+    expect(payloadCostos(r.fila)).toEqual({ sku: "A-1", stock: 0 });
+  });
+
+  it("el costo y el stock NO viajan a guardar_precios; van a guardar_costos", () => {
+    const r = validarFilaPrecios({ sku: "A-1", precio_unidad: "1000", costo: "800", stock: "5" });
+    if (!r.ok) throw new Error("válida");
+    expect(payloadPrecios(r.fila)).toEqual({ sku: "A-1", precio_unidad: 1000 });
+    expect(payloadCostos(r.fila)).toEqual({ sku: "A-1", costo: 800, stock: 5 });
+    expect(traePrecios(r.fila)).toBe(true);
+  });
+
+  it("una fila solo con costo no pasa por guardar_precios, y sin costo ni stock no hay payload de costos", () => {
+    const soloCosto = validarFilaPrecios({ sku: "A-1", costo: "800" });
+    if (!soloCosto.ok) throw new Error("válida");
+    expect(traePrecios(soloCosto.fila)).toBe(false);
+    const soloPrecio = validarFilaPrecios({ sku: "A-1", precio_unidad: "1000" });
+    if (!soloPrecio.ok) throw new Error("válida");
+    expect(payloadCostos(soloPrecio.fila)).toBeNull();
+  });
+
+  const conCostos: VarianteExistente = { ...guardada, costo: 9000, stock: 10 };
+
+  it("la vista previa muestra los cambios de costo y existencias", () => {
+    const r = validarFilaPrecios({ sku: guardada.sku, costo: "9081", stock: "10" });
+    if (!r.ok) throw new Error("válida");
+    const c = compararPrecios(r.fila, conCostos);
+    expect(c?.estado).toBe("actualizar");
+    expect(c?.cambios).toEqual([{ campo: "costo", antes: 9000, despues: 9081 }]);
+    expect(textoCambio(c!.cambios[0])).toBe("Costo: $ 9.000 → $ 9.081");
+  });
+
+  it("sin dato antes: 'sin dato → valor', y las existencias se escriben con punto de miles", () => {
+    const r = validarFilaPrecios({ sku: guardada.sku, stock: "1672" });
+    if (!r.ok) throw new Error("válida");
+    const c = compararPrecios(r.fila, guardada); // guardada no trae costos cargados
+    expect(textoCambio(c!.cambios[0])).toBe("Existencias: sin dato → 1.672");
+  });
+
+  it("mismos valores: sin cambios; celdas vacías no cuentan", () => {
+    const r = validarFilaPrecios({ sku: guardada.sku, costo: "9000", stock: "10" });
+    if (!r.ok) throw new Error("válida");
+    expect(compararPrecios(r.fila, conCostos)?.estado).toBe("sin_cambios");
+  });
+
+  const bdBase: FilaBD = {
+    ...guardada,
+    productos: {
+      nombre: "Arveja",
+      descripcion: null,
+      etiquetas: [],
+      activo: true,
+      marcas: null,
+      categorias: { nombre: "Aseo", padre: null },
+    },
+  };
+
+  it("lee el costo del embed (objeto, lista o ausente) sin colar la clave en el resultado", () => {
+    const objeto = aVarianteExistente({ ...bdBase, variante_costos: { costo: 5, stock: 7 } });
+    expect(objeto).toMatchObject({ costo: 5, stock: 7 });
+    expect(objeto).not.toHaveProperty("variante_costos");
+    const lista = aVarianteExistente({ ...bdBase, variante_costos: [{ costo: 6, stock: null }] });
+    expect(lista).toMatchObject({ costo: 6, stock: null });
+    const sinFila = aVarianteExistente({ ...bdBase, variante_costos: null });
+    expect(sinFila).toMatchObject({ costo: null, stock: null });
+    const sinEmbed = aVarianteExistente(bdBase);
+    expect(sinEmbed).not.toHaveProperty("costo");
+  });
+
+  it("el archivo de precios lleva costo y stock; la copia del catálogo NO", () => {
+    const v = aVarianteExistente({ ...bdBase, variante_costos: { costo: 5, stock: 7 } });
+    const precios = tablaDeExportacion([v], "precios");
+    expect(precios[0]).toEqual(expect.arrayContaining(["costo", "stock"]));
+    expect(precios[1][precios[0].indexOf("costo")]).toBe(5);
+    const catalogo = tablaDeExportacion([v], "catalogo");
+    expect(catalogo[0]).not.toContain("costo");
+    expect(catalogo[0]).not.toContain("stock");
+  });
+
+  it("ida y vuelta: exportar los precios y volver a subirlos no cambia nada", () => {
+    const v = aVarianteExistente({ ...bdBase, variante_costos: { costo: 5, stock: -3 } });
+    const t = tablaDeExportacion([v], "precios");
+    const cruda = Object.fromEntries(t[0].map((c, i) => [c, String(t[1][i] ?? "")]));
+    const r = validarFilaPrecios(cruda);
+    if (!r.ok) throw new Error(r.errores.join("; "));
+    expect(compararPrecios(r.fila, v)?.estado).toBe("sin_cambios");
   });
 });

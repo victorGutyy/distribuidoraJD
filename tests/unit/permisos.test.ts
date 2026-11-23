@@ -22,6 +22,7 @@ describe("matriz de permisos (requerimientos §6)", () => {
       "categorias",
       "marcas",
       "precios",
+      "inventario",
       "importar",
       "banners",
       "zonas",
@@ -38,6 +39,7 @@ describe("matriz de permisos (requerimientos §6)", () => {
       "categorias",
       "marcas",
       "precios",
+      "inventario",
       "importar",
       "banners",
     ]);
@@ -56,8 +58,8 @@ describe("matriz de permisos (requerimientos §6)", () => {
     }
   });
 
-  it("el vendedor no entra a categorías, marcas, precios ni importar", () => {
-    for (const s of ["categorias", "marcas", "precios", "importar"] as const) {
+  it("el vendedor no entra a categorías, marcas, precios, inventario ni importar", () => {
+    for (const s of ["categorias", "marcas", "precios", "inventario", "importar"] as const) {
       expect(puedeVer("vendedor", s)).toBe(false);
     }
   });
@@ -86,6 +88,7 @@ describe("seccionDeRuta y puedeAccederARuta", () => {
     expect(seccionDeRuta("/admin")).toBe("dashboard");
     expect(seccionDeRuta("/admin/")).toBe("dashboard");
     expect(seccionDeRuta("/admin/productos")).toBe("productos");
+    expect(seccionDeRuta("/admin/inventario")).toBe("inventario");
     expect(seccionDeRuta("/admin/productos/12/editar")).toBe("productos");
     expect(seccionDeRuta("/admin/pedidos?estado=nuevo")).toBe("pedidos");
   });

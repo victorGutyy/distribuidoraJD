@@ -194,6 +194,15 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 ### RF-31 Usuarios del panel · M (solo admin)
 - Invitar usuario por correo, asignar rol, desactivar
 
+### RF-32 Costos, ganancia e inventario informativo · M (admin y editor)
+- **Costo por variante** (COP enteros, con IVA, igual que los precios) y **existencias** (`stock`). Se guardan en una tabla aparte y protegida (`variante_costos`): la tienda pública y el vendedor **nunca** los ven
+- **Ganancia y margen:** `ganancia = precio_unidad − costo` y `margen % = ganancia / precio_unidad`. Se muestran en la edición rápida de precios y se resalta en rojo cuando el precio queda **por debajo del costo**
+- **Ganancia de cada pedido:** al crear el pedido se guarda una copia del costo de cada línea (`pedido_item_costos`), de modo que la ganancia de un pedido viejo no cambia si el costo sube después. Se ve en el detalle del pedido y en el dashboard (solo admin y editor)
+- **Importación:** el modo "solo precios" acepta las columnas opcionales `costo` y `stock`. Una celda vacía no borra lo que ya está guardado
+- **Pantalla `/admin/inventario`:** existencias por variante, filtros "sin stock" y "poco stock", y **valor del inventario** (`stock × costo`)
+- **El stock es informativo:** se actualiza al importar o al editarlo a mano. **No se descuenta solo** al despachar pedidos, ni marca "agotado" automáticamente (eso queda para la Fase 2)
+- El stock puede ser negativo (el sistema contable del negocio lo permite); se muestra con una alerta
+
 ---
 
 ## 4. Reglas de negocio
@@ -213,6 +222,9 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 | RN-11 | El cliente se identifica por **celular**. Si repite celular, se actualizan sus datos y se vincula el pedido |
 | RN-12 | Una variante marcada como agotada no se puede agregar al carrito |
 | RN-13 | Límite anti-abuso: máximo 5 pedidos por celular o IP cada 10 minutos |
+| RN-14 | **Costos privados:** el costo y el stock viven en `variante_costos` y `pedido_item_costos`, legibles y editables **solo por admin y editor**. Nunca se exponen a la tienda pública, al vendedor ni a git |
+| RN-15 | **Ganancia:** `ganancia = precio − costo` (ambos con IVA, sin ajustes). La ganancia de un pedido usa el costo copiado al crearlo, no el costo actual |
+| RN-16 | El stock es **informativo**: no se descuenta con los pedidos ni bloquea ventas. RN-12 sigue dependiendo solo de `variantes.disponible` |
 
 ---
 
@@ -246,6 +258,15 @@ pedido_items      (id, pedido_id, variante_id NULL, sku, nombre_producto, presen
                    tipo_precio ('unidad'|'mayor'|'oferta'), subtotal int)
 pedido_historial  (id, pedido_id, estado_anterior, estado_nuevo, usuario_id NULL, nota, created_at)
 
+-- Costos e inventario (RF-32, RN-14 a RN-16; migración 0011). RLS: SOLO admin y editor.
+variante_costos   (variante_id PK → variantes ON DELETE CASCADE, costo int NULL (>= 0),
+                   stock int NULL (puede ser negativo), stock_actualizado_at timestamptz NULL, updated_at)
+pedido_item_costos(pedido_item_id PK → pedido_items ON DELETE CASCADE, costo int NULL (>= 0))
+-- Lectura (security_invoker; vacías para quien no sea admin o editor):
+--   v_ganancia_pedidos (venta, costo y ganancia por pedido, sin envío), v_inventario_admin (existencias,
+--   margen y valor por variante) y la función resumen_costos(p_desde) (ganancia del período y totales
+--   del inventario, para el dashboard). Escritura: función guardar_costos(). Migraciones 0011 y 0012.
+
 perfiles          (id = auth.users.id, nombre, rol enum('admin','editor','vendedor'), sectores_asignados int[], activo)
 configuracion     (clave text PK, valor jsonb, updated_at, updated_by)
 banners           (id, imagen_url, imagen_movil_url, enlace, orden, activo)
@@ -269,6 +290,7 @@ devoluciones      (id, pedido_id, pedido_item_id, cantidad, motivo, evidencia_ur
 | Crear pedido (vía servidor) | ✅ | ✅ | ✅ | ✅ |
 | Productos / variantes / precios / imágenes | — | ver | CRUD | CRUD |
 | Importar / exportar | — | — | ✅ | ✅ |
+| Costos, ganancia e inventario (RF-32) | — | — | ✅ | ✅ |
 | Pedidos | — | sus sectores: ver y cambiar estado | ver | todo |
 | Zonas, configuración, banners | — | — | banners | ✅ |
 | Usuarios | — | — | — | ✅ |
