@@ -51,3 +51,6 @@ next-env.d.ts
 /data/imagenes_pdf/
 /data/imagenes_pdf_revisar/
 /data/revision_imagenes/hojas/
+
+# Listas de precios del proveedor y su emparejamiento (datos internos; el repo es público)
+/data/precios_ev/
