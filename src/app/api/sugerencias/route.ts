@@ -13,9 +13,15 @@ export async function GET(request: NextRequest) {
     .slice(0, 60);
   if (q.length < 2) return NextResponse.json({ items: [] });
 
-  const items = await sugerirProductos(q);
-  return NextResponse.json(
-    { items },
-    { headers: { "Cache-Control": "public, max-age=30, s-maxage=60" } },
-  );
+  try {
+    const items = await sugerirProductos(q);
+    return NextResponse.json(
+      { items },
+      { headers: { "Cache-Control": "public, max-age=30, s-maxage=60" } },
+    );
+  } catch (e) {
+    // El buscador debe seguir usándose aunque falle la sugerencia: se responde vacío y SIN caché.
+    console.error("[sugerencias]", e instanceof Error ? e.message : e);
+    return NextResponse.json({ items: [] }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
 }

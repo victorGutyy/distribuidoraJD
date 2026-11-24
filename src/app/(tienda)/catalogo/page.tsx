@@ -18,11 +18,20 @@ import {
 } from "@/lib/tienda/filtros-catalogo";
 import { enlaceWhatsApp } from "@/lib/whatsapp";
 
-export const metadata: Metadata = {
-  title: "Catálogo",
-  description:
-    "Catálogo de EV Distribuidora: víveres, aseo, útiles escolares y más, al por mayor y al detal.",
-};
+const DESCRIPCION_CATALOGO =
+  "Catálogo de EV Distribuidora: víveres, aseo, útiles escolares y más, al por mayor y al detal.";
+
+/** Título y dirección canónica según la categoría elegida (cada categoría es una página indexable). */
+export async function generateMetadata({ searchParams }: PageProps<"/catalogo">): Promise<Metadata> {
+  const filtros = leerFiltrosCatalogo(await searchParams);
+  const { actual } = resolverCategoria(await obtenerCategoriasTienda(), filtros.cat);
+  if (!actual) return { title: "Catálogo", description: DESCRIPCION_CATALOGO, alternates: { canonical: "/catalogo" } };
+  return {
+    title: actual.nombre,
+    description: `${actual.nombre} al por mayor y al detal en EV Distribuidora. Arma tu pedido y envíalo por WhatsApp.`,
+    alternates: { canonical: `/catalogo?cat=${encodeURIComponent(actual.slug)}` },
+  };
+}
 
 type Params = PageProps<"/catalogo">["searchParams"];
 

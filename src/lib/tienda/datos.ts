@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/publico";
+import { exigir } from "@/lib/tienda/errores";
 import type { CategoriaTienda } from "@/lib/tienda/categorias";
 import { leerConfigTienda, type ConfigTienda } from "@/lib/tienda/config";
 
@@ -14,9 +15,10 @@ export async function obtenerConfigTienda(): Promise<ConfigTienda> {
   "use cache";
   cacheLife("minutes");
   cacheTag("tienda");
-  const { data } = await createPublicClient()
+  const { data, error } = await createPublicClient()
     .from("configuracion")
     .select("clave, valor");
+  exigir(error, "la configuración de la tienda");
   return leerConfigTienda(data ?? []);
 }
 
@@ -25,11 +27,12 @@ export async function obtenerCategoriasTienda(): Promise<CategoriaTienda[]> {
   "use cache";
   cacheLife("minutes");
   cacheTag("tienda");
-  const { data } = await createPublicClient()
+  const { data, error } = await createPublicClient()
     .from("categorias")
     .select("id, nombre, slug, parent_id, orden, icono_url")
     .order("orden")
     .order("nombre");
+  exigir(error, "las categorías");
   return data ?? [];
 }
 
@@ -48,7 +51,7 @@ export async function obtenerZonasTienda(): Promise<ZonaTienda[]> {
   cacheLife("minutes");
   cacheTag("tienda");
   const supabase = createPublicClient();
-  const [{ data: municipios }, { data: sectores }] = await Promise.all([
+  const [{ data: municipios, error: errorMunicipios }, { data: sectores, error: errorSectores }] = await Promise.all([
     supabase.from("municipios").select("id, nombre").eq("activo", true).order("nombre"),
     supabase
       .from("sectores")
@@ -56,6 +59,8 @@ export async function obtenerZonasTienda(): Promise<ZonaTienda[]> {
       .eq("activo", true)
       .order("nombre"),
   ]);
+  exigir(errorMunicipios, "los municipios");
+  exigir(errorSectores, "los sectores de entrega");
   return (municipios ?? [])
     .map((m) => ({
       id: m.id,

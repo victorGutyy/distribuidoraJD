@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { cabecerasDeSeguridad } from "./src/lib/seguridad";
 
 // Las imágenes de productos viven en Supabase Storage (bucket público "catalogo").
 // next/image solo optimiza imágenes de hosts autorizados; se autoriza el de nuestro
@@ -21,6 +22,25 @@ const nextConfig: NextConfig = {
           },
         ]
       : [],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: cabecerasDeSeguridad({
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          produccion: process.env.NODE_ENV === "production",
+        }),
+      },
+      {
+        // El panel y las rutas internas no deben aparecer en buscadores ni quedarse en cachés compartidas.
+        source: "/admin/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+    ];
   },
   turbopack: {
     rules: {

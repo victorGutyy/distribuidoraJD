@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { endurecerCookie, esProduccion } from "@/lib/supabase/cookies";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database.types";
 import { getSupabasePublicEnv } from "./env";
@@ -22,7 +23,7 @@ export async function createClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
+            cookieStore.set(name, value, endurecerCookie(options, esProduccion())),
           );
         } catch {
           // Un Server Component no puede escribir cookies. Se ignora: en F1

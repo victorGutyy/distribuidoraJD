@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { esRangoVacio, exigir } from "@/lib/tienda/errores";
 import { createPublicClient } from "@/lib/supabase/publico";
 import {
   POR_PAGINA_CATALOGO,
@@ -51,10 +52,11 @@ export async function listarCatalogo(
 
   let relevancia: Map<number, number> | null = null;
   if (filtros.q) {
-    const { data } = await supabase.rpc("buscar_catalogo", {
+    const { data, error: errorBusqueda } = await supabase.rpc("buscar_catalogo", {
       p_q: filtros.q,
       p_limite: 300,
     });
+    exigir(errorBusqueda, "la búsqueda del catálogo");
     if (!data || data.length === 0) return VACIO;
     relevancia = new Map(data.map((d) => [d.id, d.relevancia]));
   }
@@ -98,7 +100,8 @@ export async function listarCatalogo(
   if (porRelevancia && relevancia) {
     // Máximo 300 coincidencias: se traen todas, se ordenan por relevancia y se pagina aquí.
     const { data: crudo, error } = await consulta.limit(300);
-    if (error || !crudo) return VACIO;
+    exigir(error, "los resultados de la búsqueda");
+    if (!crudo) return VACIO;
     // El texto del select se arma por partes, así que TypeScript no infiere las columnas.
     const data = crudo as unknown as FilaTienda[];
     const ordenadas = [...data].sort(
@@ -118,11 +121,13 @@ export async function listarCatalogo(
   const pedir = async (pagina: number) => {
     const desde = (pagina - 1) * POR_PAGINA_CATALOGO;
     const r = await consulta.range(desde, desde + POR_PAGINA_CATALOGO - 1);
+    // PostgREST responde con un error (PGRST103) si el rango empieza después del último producto:
+    // eso es normal. Cualquier OTRO error (tiempo de espera, base caída) se lanza para no guardarlo en la caché.
+    if (!esRangoVacio(r.error)) exigir(r.error, "el listado del catálogo");
     return {
       filas: (r.data ?? []) as unknown as FilaTienda[],
       total: r.count ?? 0,
-      // PostgREST responde con error si el rango empieza después del último producto.
-      fueraDeRango: r.error !== null,
+      fueraDeRango: esRangoVacio(r.error),
     };
   };
 
@@ -157,10 +162,12 @@ export async function obtenerFacetas(): Promise<Facetas> {
   cacheTag("catalogo");
 
   const supabase = createPublicClient();
-  const [{ data: conteos }, { data: marcas }] = await Promise.all([
+  const [{ data: conteos, error: errorConteos }, { data: marcas, error: errorMarcas }] = await Promise.all([
     supabase.rpc("conteos_catalogo"),
     supabase.from("marcas").select("id, nombre, slug").order("nombre"),
   ]);
+  exigir(errorConteos, "los conteos del catálogo");
+  exigir(errorMarcas, "las marcas");
 
   const porCategoria: Record<number, number> = {};
   const porMarca = new Map<number, number>();
@@ -190,12 +197,14 @@ export async function sugerirProductos(q: string): Promise<Sugerencia[]> {
   cacheTag("catalogo");
 
   const supabase = createPublicClient();
-  const { data: hits } = await supabase.rpc("buscar_catalogo", { p_q: q, p_limite: 6 });
+  const { data: hits, error: errorHits } = await supabase.rpc("buscar_catalogo", { p_q: q, p_limite: 6 });
+  exigir(errorHits, "las sugerencias del buscador");
   if (!hits || hits.length === 0) return [];
-  const { data } = await supabase
+  const { data, error: errorFilas } = await supabase
     .from("v_tienda_productos")
     .select("id, nombre, slug, marca_nombre, imagen_miniatura_url, imagen_url")
     .in("id", hits.map((h) => h.id));
+  exigir(errorFilas, "las sugerencias del buscador");
   const por = new Map((data ?? []).map((f) => [f.id, f]));
   return hits.flatMap((h) => {
     const f = por.get(h.id);
@@ -233,11 +242,12 @@ export async function obtenerProducto(slug: string): Promise<DetalleProducto | n
   cacheTag("catalogo");
 
   const supabase = createPublicClient();
-  const { data: p } = await supabase
+  const { data: p, error: errorProducto } = await supabase
     .from("v_tienda_productos")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
+  exigir(errorProducto, "el producto");
   if (!p || p.id === null || p.nombre === null || p.slug === null || p.categoria_id === null) {
     return null;
   }
@@ -260,6 +270,10 @@ export async function obtenerProducto(slug: string): Promise<DetalleProducto | n
       .order("nombre")
       .limit(4),
   ]);
+
+  exigir(variantes.error, "las presentaciones del producto");
+  exigir(imagenes.error, "las imágenes del producto");
+  exigir(relacionados.error, "los productos relacionados");
 
   return {
     id: p.id,
@@ -324,6 +338,10 @@ export async function obtenerInicio(): Promise<DatosInicio> {
       .order("created_at", { ascending: false })
       .limit(8),
   ]);
+
+  exigir(banners.error, "los banners");
+  exigir(ofertas.error, "las ofertas");
+  exigir(nuevos.error, "los productos nuevos");
 
   const tarjetas = (r: { data: unknown }) =>
     ((r.data ?? []) as FilaTienda[]).flatMap((f) => aTarjeta(f) ?? []);

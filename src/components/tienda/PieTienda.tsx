@@ -36,6 +36,12 @@ export function PieTienda({ config }: { config: ConfigTienda }) {
           <Link href="/catalogo" className="text-white/80 hover:text-white hover:underline">
             Ver catálogo
           </Link>
+          <Link href="/preguntas-frecuentes" className="text-white/80 hover:text-white hover:underline">
+            Preguntas frecuentes
+          </Link>
+          <Link href="/contactanos" className="text-white/80 hover:text-white hover:underline">
+            Contáctanos
+          </Link>
           <p className="text-white/80">Pago contraentrega</p>
           {empresa.redes.map((r) => (
             <a
@@ -50,9 +56,17 @@ export function PieTienda({ config }: { config: ConfigTienda }) {
           ))}
         </div>
       </div>
-      <p className="border-t border-white/10 px-4 py-4 text-center text-xs text-white/60">
-        © {empresa.nombre}. Todos los derechos reservados.
-      </p>
+      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-white/60">
+        <nav aria-label="Información legal" className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
+          <Link href="/politica-de-datos" className="hover:text-white hover:underline">
+            Política de datos
+          </Link>
+          <Link href="/terminos" className="hover:text-white hover:underline">
+            Términos y condiciones
+          </Link>
+        </nav>
+        <p>© {empresa.nombre}. Todos los derechos reservados.</p>
+      </div>
     </footer>
   );
 }

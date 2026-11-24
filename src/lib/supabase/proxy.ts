@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { endurecerCookie, esProduccion } from "@/lib/supabase/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 import { getSupabasePublicEnv } from "./env";
@@ -28,7 +29,7 @@ export async function actualizarSesion(request: NextRequest) {
         );
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
+          response.cookies.set(name, value, endurecerCookie(options, esProduccion())),
         );
       },
     },

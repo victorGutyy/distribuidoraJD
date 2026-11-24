@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Política de tratamiento de datos",
+  alternates: { canonical: "/politica-de-datos" },
 };
 
 /**
