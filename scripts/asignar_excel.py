@@ -13,6 +13,11 @@ Dos pasos (desde la raíz del proyecto, en Git Bash):
   1b) python scripts/asignar_excel.py validar N
        Comprueba asignacion_lote_N.csv (columnas, categorías, unidades, filas completas).
 
+  3) python scripts/asignar_excel.py aprobar "revision_para_marcar.xlsx" "pendientes_para_revisar.xlsx" "listado de precio.xlsx"
+       Aplica lo que la persona marcó «si» en los dos Excel de revisión y arma:
+         aprobado_catalogo_para_importar.csv   modo «Catálogo completo» (dudosos, duplicados, categorías, unidades)
+         aprobado_precios_para_importar.csv    modo «Solo precios» (coincidencias y dudosos, con costo y existencias)
+
   2) python scripts/asignar_excel.py armar "C:/ruta/listado de precio actualizadoEV.xlsx"
        Valida lo revisado (asignacion_lote_N.csv) y arma los archivos de importación:
          catalogo_nuevo_para_importar.csv        modo «Catálogo completo» del importador
@@ -568,6 +573,180 @@ def armar(ruta_xlsx: str) -> int:
     return 0
 
 
+# ---------------------------------------------------------------- aplicar lo que la persona aprobó
+
+IDENT = ("producto", "categoria", "subcategoria", "marca")
+
+
+def es_si(valor) -> bool:
+    """«si», «sí», «SI», «s» o «x» (en cualquier mayúscula) cuentan como aprobado; lo demás, no."""
+    return ep.normalizar(str(valor or "")) in ("SI", "S", "X")
+
+
+def fusionar_por_sku(filas: list[dict]) -> list[dict]:
+    """
+    Una sola fila por SKU (el importador marca como error un SKU repetido). Los campos vacíos se
+    completan con los de la otra fila; «activo = no» gana. Si dos filas del mismo SKU traen una
+    identidad distinta, se avisa (nunca se decide en silencio). PURA, con pruebas.
+    """
+    por_sku: dict[str, dict] = {}
+    for f in filas:
+        previa = por_sku.get(f["sku"])
+        if previa is None:
+            por_sku[f["sku"]] = dict(f)
+            continue
+        for c in IDENT:
+            if previa[c] and f[c] and previa[c] != f[c]:
+                raise ValueError(f"El SKU {f['sku']} trae dos identidades distintas: {previa[c]!r} y {f[c]!r}")
+        for c, v in f.items():
+            if c == "activo":
+                if v == "no" or not previa[c]:
+                    previa[c] = v or previa[c]
+            elif v != "" and previa.get(c, "") == "":
+                previa[c] = v
+    return list(por_sku.values())
+
+
+def aplicar_cambios_de_categoria(filas: list[dict], cambios: dict[tuple, tuple]) -> list[dict]:
+    """
+    cambios: identidad vieja (producto, categoria, subcategoria, marca) → identidad nueva.
+    Se aplica a TODAS las filas del producto, para que ninguna devuelva la categoría a la anterior
+    (el importador reescribe el producto con lo que trae cada fila). PURA, con pruebas.
+    """
+    salida = []
+    for f in filas:
+        nueva = cambios.get(tuple(f[c] for c in IDENT))
+        salida.append({**f, **dict(zip(IDENT, nueva))} if nueva else f)
+    return salida
+
+
+def leer_hoja_si_no(ruta: Path, hoja: str, columna: str) -> list[dict]:
+    filas = ep.leer_xlsx(ruta, hoja)
+    for f in filas:
+        f["_si"] = es_si(f.get(columna))
+    return filas
+
+
+def aprobar(ruta_coincidencias: str, ruta_pendientes: str, ruta_xlsx: str) -> int:
+    rc, rp = Path(ruta_coincidencias), Path(ruta_pendientes)
+    coincidencias = leer_hoja_si_no(rc, "Coincidencias", "¿Es el mismo producto? (si / no)")
+    dudosos = leer_hoja_si_no(rp, "Dudosos", "¿Aprobar? (si/no)")
+    duplicados = leer_hoja_si_no(rp, "Posibles duplicados", "¿Es el mismo producto? (si/no)")
+    categorias = leer_hoja_si_no(rp, "Categorías", "¿Aplicar? (si/no)")
+    unidades = leer_hoja_si_no(rp, "Unidades mg", "¿Aplicar? (si/no)")
+
+    excel = {r["fila_excel"]: r for r in leer_csv(CARPETA / "excel_sin_costo.csv")}
+    costos = {str(x["_fila"]): cp.costo_y_stock(x) for x in ep.leer_xlsx(Path(ruta_xlsx))}
+    productos = {r["sku_ref"]: r for r in leer_csv(CARPETA / "productos_existentes.csv")}
+    base = leer_csv(CATALOGO)
+    ident_de = {c["sku"]: {k: c[k] for k in IDENT} for c in base}  # identidad actual de cada SKU del catálogo
+    todos_asignaciones = []
+    for n in range(1, N_LOTES + 1):
+        todos_asignaciones += leer_csv(CARPETA / f"asignacion_lote_{n}.csv")
+    previos = {r["fila_excel"]: r for r in leer_csv(CARPETA / "sku_asignados_excel.csv")}
+
+    # --- 1) Coincidencias aprobadas: solo precio, costo y existencias (la presentación ya existe) ---
+    precios: list[dict] = []
+    for r in coincidencias:
+        if not r["_si"]:
+            continue
+        fe = str(int(r["Fila del Excel"]))
+        x = excel[fe]
+        l1, l2 = cp.entero(x["lista1"]), cp.entero(x["lista2"])
+        if not l1:
+            continue
+        c = costos.get(fe, {"costo": None, "stock": None})
+        precios.append({
+            "sku": r["SKU"], "producto": r["Producto del catálogo"], "presentacion": r["Presentación (catálogo)"] or "",
+            "precio_unidad": l1, "precio_mayor": l2 if cp.puede_guardar_mayor(l1, l2) else "", "cantidad_min_mayor": "",
+            "en_oferta": "", "precio_oferta": "", "disponible": "",
+            "costo": c["costo"] if c["costo"] is not None else "", "stock": c["stock"] if c["stock"] is not None else "",
+        })
+    n_coincidencias = len(precios)
+
+    # --- 2) Dudosos aprobados: las filas del archivo «dudoso» que digan «si» ---
+    aprobados = {r["SKU"] for r in dudosos if r["_si"]}
+    rechazados = {r["SKU"] for r in dudosos if not r["_si"]}
+    cat_dudoso = leer_csv(CARPETA / "catalogo_nuevo_dudoso_para_importar.csv")
+    pre_dudoso = leer_csv(CARPETA / "precios_costos_nuevo_dudoso_para_importar.csv")
+    filas_cat = [f for f in cat_dudoso if f["precio_unidad"] == "" or f["sku"] in aprobados]
+    filas_cat = [f for f in filas_cat if f["sku"] not in rechazados]
+    precios += [p for p in pre_dudoso if p["sku"] in aprobados]
+    sku_confiables = {f["sku"] for f in leer_csv(CARPETA / "catalogo_nuevo_para_importar.csv")}
+
+    # --- 3) Duplicados aprobados: el «producto nuevo» es una presentación del existente ---
+    aprobar_dup = {(str(r["Producto nuevo"]), str(r["Marca"] or "")): str(r["SKU del existente"]) for r in duplicados if r["_si"]}
+    convertidas, retiradas = [], []
+    for a in todos_asignaciones:
+        ref = aprobar_dup.get((a["producto"], a["marca"]))
+        if a["accion"] == "nuevo" and ref:
+            convertidas.append({**a, "accion": "variante", "sku_existente": ref, "producto": "", "categoria": "",
+                                "subcategoria": "", "marca": "", "presentacion":
+                                (f"{a['marca']} · {a['presentacion']}" if a["marca"] and a["marca"].lower() not in a["presentacion"].lower() else a["presentacion"])[:60]})
+            antiguo = previos[a["fila_excel"]]["sku"]
+            if antiguo in sku_confiables:  # ya se importó como producto nuevo: se retira
+                retiradas.append({**{k: "" for k in CAMPOS_CATALOGO}, "sku": antiguo, "producto": a["producto"],
+                                  "categoria": a["categoria"], "subcategoria": a["subcategoria"], "marca": a["marca"], "activo": "no"})
+            else:  # todavía no se importó: se quita de los archivos de este lote
+                filas_cat = [f for f in filas_cat if f["sku"] != antiguo]
+                precios = [p for p in precios if p["sku"] != antiguo]
+    if convertidas:
+        sin_previos = {k: v for k, v in previos.items() if k not in {c["fila_excel"] for c in convertidas}}
+        skus_por_producto = {}
+        por_id: dict[tuple, list[str]] = defaultdict(list)
+        for c in base:
+            por_id[tuple(c[k] for k in IDENT)].append(c["sku"])
+        for ref_, p in productos.items():
+            skus_por_producto[ref_] = por_id[tuple(p[k] for k in IDENT)]
+        r = armar_filas(convertidas, excel, costos, productos, skus_por_producto, set(), sin_previos)
+        # Las presentaciones nuevas del existente: sin la fila ancla duplicada si ya viene en otra parte.
+        filas_cat += r["catalogo"]
+        precios += r["precios"]
+        todos = {**previos, **{k: {"fila_excel": k, **v} for k, v in r["asignados"].items()}}
+        escribir_csv(CARPETA / "sku_asignados_excel.csv", ["fila_excel", "sku", "clave"], list(todos.values()))
+    filas_cat += retiradas
+
+    # --- 4) Categorías y unidades aprobadas ---
+    cambios: dict[tuple, tuple] = {}
+    cat_ok = {str(r["SKU"]): r for r in categorias if r["_si"]}
+    propuestas = {r["sku"]: r for r in leer_csv(CARPETA / "recategorizar_sugeridas.csv")}
+    for sku in cat_ok:
+        p = propuestas[sku]
+        viejo = tuple(ident_de[sku][k] for k in IDENT)
+        cambios[viejo] = (viejo[0], p["categoria_propuesta"], p["subcategoria_propuesta"], viejo[3])
+    extra: list[dict] = []
+    for sku in cat_ok:
+        extra.append({**{k: "" for k in CAMPOS_CATALOGO}, "sku": sku, **{k: ident_de[sku][k] for k in IDENT}})
+    mg_ok = {str(r["SKU"]) for r in unidades if r["_si"]}
+    mg = {r["sku"]: r for r in leer_csv(CARPETA / "correcciones_mg.csv")}
+    for sku in mg_ok:
+        m = mg[sku]
+        extra.append({**{k: "" for k in CAMPOS_CATALOGO}, "sku": sku, **{k: ident_de[sku][k] for k in IDENT},
+                      "presentacion": m["presentacion_nueva"], "contenido_valor": m["contenido_valor"],
+                      "contenido_unidad": m["unidad_propuesta"]})
+    filas_cat += extra
+    filas_cat = aplicar_cambios_de_categoria(filas_cat, cambios)
+    filas_cat = fusionar_por_sku(filas_cat)
+
+    # Las presentaciones con precio y los SKU sin repetir en el archivo de precios.
+    vistos, precios_unicos = set(), []
+    for p in precios:
+        if p["sku"] not in vistos:
+            vistos.add(p["sku"])
+            precios_unicos.append(p)
+    campos_precios = ["sku", "producto", "presentacion", "precio_unidad", "precio_mayor", "cantidad_min_mayor", "en_oferta",
+                      "precio_oferta", "disponible", "costo", "stock"]
+    escribir_csv(CARPETA / "aprobado_catalogo_para_importar.csv", CAMPOS_CATALOGO, filas_cat)
+    escribir_csv(CARPETA / "aprobado_precios_para_importar.csv", campos_precios, precios_unicos)
+    print({
+        "coincidencias_aprobadas": n_coincidencias, "dudosos_aprobados": len(aprobados),
+        "duplicados_convertidos": len(convertidas), "duplicados_ya_importados_que_se_retiran": len(retiradas),
+        "categorias": len(cat_ok), "unidades_mg": len(mg_ok),
+        "filas_catalogo": len(filas_cat), "filas_precios": len(precios_unicos),
+    })
+    return 0
+
+
 def validar_lote_silencioso(n: int) -> list[str]:
     esperadas = {r["fila_excel"] for r in leer_csv(CARPETA / f"asignar_lote_{n}.csv")}
     categorias = {(r["categoria"], r["subcategoria"]) for r in leer_csv(CARPETA / "categorias_validas.csv")}
@@ -576,6 +755,11 @@ def validar_lote_silencioso(n: int) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) >= 2 and argv[1] == "aprobar":
+        if len(argv) != 5:
+            print('Uso: python scripts/asignar_excel.py aprobar "revision_para_marcar.xlsx" "pendientes_para_revisar.xlsx" "listado de precio.xlsx"')
+            return 1
+        return aprobar(argv[2], argv[3], argv[4])
     if len(argv) < 2 or argv[1] not in ("preparar", "validar", "armar"):
         print(__doc__)
         return 1

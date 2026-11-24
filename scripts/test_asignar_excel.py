@@ -146,6 +146,42 @@ class TestSeparacion(unittest.TestCase):
         self.assertEqual(a.anclas_de_confiables([self.fila("EVP-00002-01", "Otro")], [self.fila("EVP-00001-01")]), [])
 
 
+class TestAprobar(unittest.TestCase):
+    def fila(self, sku, **kw):
+        base = {c: "" for c in a.CAMPOS_CATALOGO}
+        base.update({"sku": sku, "producto": "Shampoo", "categoria": "Hogar y ferretería", "subcategoria": "Varios"})
+        base.update(kw)
+        return base
+
+    def test_respuestas_que_cuentan_como_si(self):
+        for v in ("si", "SI", "Sí", " s ", "x"):
+            self.assertTrue(a.es_si(v), v)
+        for v in ("no", "", None, "tal vez", "2"):
+            self.assertFalse(a.es_si(v), v)
+
+    def test_un_sku_en_dos_filas_se_fusiona_en_una(self):
+        cat = self.fila("EVC-1", categoria="Cuidado personal", subcategoria="Cuidado capilar")
+        mg = self.fila("EVC-1", categoria="Cuidado personal", subcategoria="Cuidado capilar", presentacion="500 ml",
+                       contenido_valor="500", contenido_unidad="ml")
+        fusion = a.fusionar_por_sku([cat, mg])
+        self.assertEqual(len(fusion), 1)
+        self.assertEqual((fusion[0]["presentacion"], fusion[0]["contenido_unidad"]), ("500 ml", "ml"))
+
+    def test_activo_no_gana_y_las_identidades_distintas_se_rechazan(self):
+        f = a.fusionar_por_sku([self.fila("EVC-1", activo="no"), self.fila("EVC-1", presentacion="x")])
+        self.assertEqual(f[0]["activo"], "no")
+        with self.assertRaises(ValueError):
+            a.fusionar_por_sku([self.fila("EVC-1"), self.fila("EVC-1", categoria="Aseo del hogar")])
+
+    def test_el_cambio_de_categoria_llega_a_todas_las_filas_del_producto(self):
+        viejo = ("Shampoo", "Hogar y ferretería", "Varios", "")
+        nuevo = ("Shampoo", "Cuidado personal", "Cuidado capilar", "")
+        filas = [self.fila("EVC-1"), self.fila("EVC-2", precio_unidad="1000"), self.fila("EVC-9", producto="Otro")]
+        r = a.aplicar_cambios_de_categoria(filas, {viejo: nuevo})
+        self.assertEqual([(f["categoria"], f["subcategoria"]) for f in r],
+                         [("Cuidado personal", "Cuidado capilar")] * 2 + [("Hogar y ferretería", "Varios")])
+
+
 class TestArmar(unittest.TestCase):
     def armar(self, asignaciones, previos=None, genericos=frozenset()):
         excel_ = {"10": excel(10, "ESMALTE BARDOT #103", "BARDOT", "3378", "3250"),

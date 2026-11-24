@@ -133,27 +133,50 @@ def _col_a_indice(ref: str) -> int:
     return n - 1
 
 
-def leer_xlsx(ruta: Path) -> list[dict]:
-    """Lee la primera hoja de un .xlsx como lista de dicts (usa solo zipfile + xml)."""
+_NS_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+_NS_PAQ = "http://schemas.openxmlformats.org/package/2006/relationships"
+
+
+def _ruta_de_hoja(z: zipfile.ZipFile, hoja: str | None) -> str:
+    """Ruta interna de una hoja por su nombre (la primera si no se indica)."""
+    libro = ET.fromstring(z.read("xl/workbook.xml"))
+    hojas = libro.find("m:sheets", _NS).findall("m:sheet", _NS)
+    elegida = next((h for h in hojas if hoja is None or h.get("name") == hoja), None)
+    if elegida is None:
+        raise KeyError(f"El archivo no tiene una hoja llamada «{hoja}»")
+    rid = elegida.get(f"{{{_NS_REL}}}id")
+    for rel in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")).findall(f"{{{_NS_PAQ}}}Relationship"):
+        if rel.get("Id") == rid:
+            destino = rel.get("Target")
+            return destino.lstrip("/") if destino.startswith("/") else "xl/" + destino
+    raise KeyError("No se encontró la hoja dentro del archivo")
+
+
+def leer_xlsx(ruta: Path, hoja: str | None = None) -> list[dict]:
+    """Lee una hoja de un .xlsx (la primera por defecto) como lista de dicts, solo con zipfile + xml."""
     with zipfile.ZipFile(ruta) as z:
         compartidas: list[str] = []
         if "xl/sharedStrings.xml" in z.namelist():
             raiz_xml = ET.fromstring(z.read("xl/sharedStrings.xml"))
             for si in raiz_xml.findall("m:si", _NS):
                 compartidas.append("".join(t.text or "" for t in si.iter(f"{{{_NS['m']}}}t")))
-        hoja = ET.fromstring(z.read("xl/worksheets/sheet1.xml"))
+        sheet = ET.fromstring(z.read(_ruta_de_hoja(z, hoja)))
 
     filas: list[list] = []
-    for fila in hoja.find("m:sheetData", _NS).findall("m:row", _NS):
+    for fila in sheet.find("m:sheetData", _NS).findall("m:row", _NS):
         valores: dict[int, object] = {}
         for c in fila.findall("m:c", _NS):
             v = c.find("m:v", _NS)
-            if v is None or v.text is None:
+            if c.get("t") == "inlineStr":  # texto escrito dentro de la celda (otros programas lo usan)
+                valor = "".join(t.text or "" for t in c.iter(f"{{{_NS['m']}}}t"))
+            elif v is None or v.text is None:
                 continue
-            if c.get("t") == "s":
+            elif c.get("t") == "s":
                 valor = compartidas[int(v.text)]
-            elif c.get("t") in ("str", "inlineStr"):
+            elif c.get("t") in ("str", "e"):
                 valor = v.text
+            elif c.get("t") == "b":
+                valor = bool(int(v.text))
             else:
                 n = float(v.text)
                 valor = int(n) if n == int(n) else n
