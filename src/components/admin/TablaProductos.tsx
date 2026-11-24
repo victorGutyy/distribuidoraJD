@@ -70,7 +70,7 @@ function Miniatura({ url, nombre }: { url: string | null; nombre: string }) {
       alt={nombre}
       width={48}
       height={48}
-      className="size-12 shrink-0 rounded-lg object-cover"
+      className="size-12 shrink-0 rounded-lg border bg-white object-contain p-0.5"
     />
   );
 }

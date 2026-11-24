@@ -53,13 +53,13 @@ export function GaleriaImagenes({
             img.es_principal && "border-ev-azul ring-2 ring-ev-azul/30",
           )}
         >
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+          <div className="relative aspect-square overflow-hidden rounded-lg border bg-white">
             <Image
               src={img.url_miniatura ?? img.url}
               alt={`${nombreProducto}, imagen ${i + 1}`}
               fill
               sizes="(min-width: 1024px) 200px, (min-width: 640px) 30vw, 45vw"
-              className="object-cover"
+              className="object-contain p-1.5"
             />
             {img.es_principal ? (
               <Badge className="absolute top-1.5 left-1.5 gap-1">

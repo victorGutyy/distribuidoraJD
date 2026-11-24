@@ -20,7 +20,14 @@ export function TarjetaProducto({
   const href = `/producto/${p.slug}`;
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border bg-background">
-      <Link href={href} className="relative block aspect-square bg-muted" tabIndex={-1} aria-hidden="true">
+      {/* Fondo blanco + «contener» con margen: la foto se ve COMPLETA (nunca recortada) y las fotos con
+          fondo blanco se funden con la tarjeta, sea cual sea su proporción. */}
+      <Link
+        href={href}
+        className={`relative block aspect-square border-b ${p.imagen ? "bg-white" : "bg-muted"}`}
+        tabIndex={-1}
+        aria-hidden="true"
+      >
         {p.imagen ? (
           <Image
             src={p.imagen}
@@ -28,7 +35,7 @@ export function TarjetaProducto({
             fill
             sizes="(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 46vw"
             priority={prioridad}
-            className="object-cover"
+            className="object-contain p-3"
           />
         ) : (
           <span className="flex size-full items-center justify-center">
