@@ -468,6 +468,17 @@ def armar_filas(
             "desactivadas": [f["sku"] for f in filas_ancla if f["activo"] == "no"]}
 
 
+def ordenar_para_importar(filas: list[dict]) -> list[dict]:
+    """
+    El importador toma el «activo» del PRODUCTO de la primera fila de su grupo (src: importar_catalogo).
+    Si la primera fila es la que desactiva una presentación genérica (activo = no), el producto
+    ENTERO queda oculto aunque tenga decenas de presentaciones con precio (error ocurrido en la
+    primera importación: 189 productos ocultos). Por eso las filas que desactivan van al FINAL:
+    así la primera fila de cada producto nunca apaga nada. PURA, con pruebas.
+    """
+    return [f for f in filas if f.get("activo") != "no"] + [f for f in filas if f.get("activo") == "no"]
+
+
 def con_duda(asignacion: dict) -> bool:
     """Una fila con «REVISAR» en la nota espera una decisión humana antes de publicarse."""
     return "REVISAR" in (asignacion.get("nota") or "")
@@ -558,7 +569,8 @@ def armar(ruta_xlsx: str) -> int:
     nombres = {"confiable": "", "dudoso": "_dudoso"}
     revision_total = []
     for k, res in resultados.items():
-        escribir_csv(CARPETA / f"catalogo_nuevo{nombres[k]}_para_importar.csv", CAMPOS_CATALOGO, res["catalogo"])
+        escribir_csv(CARPETA / f"catalogo_nuevo{nombres[k]}_para_importar.csv", CAMPOS_CATALOGO,
+                     ordenar_para_importar(res["catalogo"]))
         escribir_csv(CARPETA / f"precios_costos_nuevo{nombres[k]}_para_importar.csv", campos_precios, res["precios"])
         revision_total += [{"lote": k, **x} for x in res["revision"]]
     escribir_csv(CARPETA / "revision_nuevos.csv", campos_rev, revision_total)
@@ -726,7 +738,7 @@ def aprobar(ruta_coincidencias: str, ruta_pendientes: str, ruta_xlsx: str) -> in
                       "contenido_unidad": m["unidad_propuesta"]})
     filas_cat += extra
     filas_cat = aplicar_cambios_de_categoria(filas_cat, cambios)
-    filas_cat = fusionar_por_sku(filas_cat)
+    filas_cat = ordenar_para_importar(fusionar_por_sku(filas_cat))
 
     # Las presentaciones con precio y los SKU sin repetir en el archivo de precios.
     vistos, precios_unicos = set(), []

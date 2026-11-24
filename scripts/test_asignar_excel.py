@@ -146,6 +146,25 @@ class TestSeparacion(unittest.TestCase):
         self.assertEqual(a.anclas_de_confiables([self.fila("EVP-00002-01", "Otro")], [self.fila("EVP-00001-01")]), [])
 
 
+class TestOrdenImportacion(unittest.TestCase):
+    def fila(self, sku, activo="", precio=""):
+        base = {c: "" for c in a.CAMPOS_CATALOGO}
+        base.update({"sku": sku, "producto": "Esmalte", "categoria": "Cuidado personal", "subcategoria": "Cosméticos",
+                     "activo": activo, "precio_unidad": precio})
+        return base
+
+    def test_la_fila_que_desactiva_nunca_es_la_primera_del_producto(self):
+        # Antes: [desactiva el genérico, variante nueva] → el importador apagaba el producto entero.
+        filas = [self.fila("G-01", activo="no"), self.fila("G-02", precio="3000"), self.fila("H-01", precio="500")]
+        salida = a.ordenar_para_importar(filas)
+        self.assertEqual([f["sku"] for f in salida], ["G-02", "H-01", "G-01"])
+        self.assertNotEqual(salida[0]["activo"], "no")
+
+    def test_conserva_el_orden_relativo_de_las_demas(self):
+        filas = [self.fila("A"), self.fila("B", activo="no"), self.fila("C"), self.fila("D", activo="no")]
+        self.assertEqual([f["sku"] for f in a.ordenar_para_importar(filas)], ["A", "C", "B", "D"])
+
+
 class TestAprobar(unittest.TestCase):
     def fila(self, sku, **kw):
         base = {c: "" for c in a.CAMPOS_CATALOGO}
