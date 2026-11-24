@@ -7,13 +7,14 @@
 -- ---------------------------------------------------------------------------
 -- 1. Primer administrador
 -- Pasa a 'admin' y activo al usuario creado a mano en Authentication.
--- (El correo es el del dueño del proyecto; cambia el valor si fuera otro.)
+-- Antes de ejecutarlo, reemplaza TU_CORREO_ADMIN@ejemplo.com por el correo con el que creaste
+-- el usuario en Authentication. (No se escribe un correo real aquí: este repositorio es público.)
 -- ---------------------------------------------------------------------------
 update public.perfiles p
 set rol = 'admin', activo = true, nombre = coalesce(nullif(p.nombre, ''), 'Administrador')
 from auth.users u
 where u.id = p.id
-  and u.email = 'vicalf0424@gmail.com';
+  and u.email = 'TU_CORREO_ADMIN@ejemplo.com';
 
 -- ---------------------------------------------------------------------------
 -- 2. Municipios del Quindío

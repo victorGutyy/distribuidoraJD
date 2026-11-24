@@ -14,6 +14,7 @@ import {
   claseSelect,
 } from "@/components/admin/CampoForm";
 import { CamposVariante } from "@/components/admin/CamposVariante";
+import { useAvisoSinGuardar } from "@/components/admin/useAvisoSinGuardar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -89,6 +90,8 @@ export function FormularioProducto({
   const esEdicion = valoresIniciales.id !== "";
   const errores = formState.errors;
   const hayErrores = Object.keys(errores).length > 0;
+  // Avisa antes de perder lo escrito (cerrar la pestaña, usar el menú o «Cancelar»).
+  useAvisoSinGuardar(formState.isDirty && !pendiente);
 
   const enviar = form.handleSubmit(() => {
     setErrorGeneral(null);

@@ -5,6 +5,7 @@ import {
   eliminarCategoria,
   moverCategoria,
 } from "@/app/admin/(panel)/categorias/actions";
+import { BotonConfirmarAccion } from "@/components/admin/BotonConfirmarAccion";
 import { BotonEliminar } from "@/components/admin/BotonEliminar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -87,12 +88,24 @@ export function FilaCategoria({
           Editar
         </Link>
 
-        <form action={alternarCategoria}>
-          <input type="hidden" name="id" value={id} />
-          <Button type="submit" variant="outline" size="sm" className="min-h-9">
-            {activa ? "Desactivar" : "Activar"}
-          </Button>
-        </form>
+        {activa ? (
+          <BotonConfirmarAccion
+            accion={alternarCategoria}
+            id={id}
+            textoBoton="Desactivar"
+            etiquetaAria={`Desactivar ${nombre}`}
+            titulo={`¿Desactivar «${nombre}»?`}
+            descripcion="Se ocultará de la tienda junto con sus subcategorías y todos los productos que tenga adentro. No se borra nada: puedes volver a activarla cuando quieras."
+            textoConfirmar="Sí, desactivar"
+          />
+        ) : (
+          <form action={alternarCategoria}>
+            <input type="hidden" name="id" value={id} />
+            <Button type="submit" variant="outline" size="sm" className="min-h-9">
+              Activar
+            </Button>
+          </form>
+        )}
 
         <BotonEliminar
           accion={eliminarCategoria}

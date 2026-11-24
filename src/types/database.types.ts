@@ -405,6 +405,8 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          acepta_datos_at: string | null
+          clave_idempotencia: string | null
           cliente_id: number
           costo_envio: number
           created_at: string
@@ -422,8 +424,11 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
+          version_politica: string | null
         }
         Insert: {
+          acepta_datos_at?: string | null
+          clave_idempotencia?: string | null
           cliente_id: number
           costo_envio?: number
           created_at?: string
@@ -441,8 +446,11 @@ export type Database = {
           subtotal: number
           total: number
           updated_at?: string
+          version_politica?: string | null
         }
         Update: {
+          acepta_datos_at?: string | null
+          clave_idempotencia?: string | null
           cliente_id?: number
           costo_envio?: number
           created_at?: string
@@ -460,6 +468,7 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          version_politica?: string | null
         }
         Relationships: [
           {
@@ -1078,6 +1087,16 @@ export type Database = {
       }
       f_unaccent: { Args: { texto: string }; Returns: string }
       guardar_costos: { Args: { p_filas: Json }; Returns: Json }
+      reprogramar_pedido: {
+        Args: {
+          p_direccion: string
+          p_fecha: string
+          p_motivo: string
+          p_notas: string
+          p_pedido_id: number
+        }
+        Returns: Json
+      }
       resumen_costos: { Args: { p_desde: string }; Returns: Json }
       guardar_precios: { Args: { p_filas: Json }; Returns: Json }
       guardar_producto: {

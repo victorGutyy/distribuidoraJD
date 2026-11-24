@@ -1,11 +1,13 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { guardarPreciosRapido } from "@/app/admin/(panel)/precios/actions";
 import { AvisoError, AvisoInfo } from "@/components/admin/Campo";
+import { useAvisoSinGuardar } from "@/components/admin/useAvisoSinGuardar";
 import { Button } from "@/components/ui/button";
 import {
+  advertenciaDeFila,
   costoCambiado,
   idsModificados,
   valoresDesdeFila,
@@ -65,13 +67,8 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
 
   const modificados = idsModificados(base, valores);
 
-  // Avisa al cerrar o recargar la pestaña con cambios sin guardar.
-  useEffect(() => {
-    if (modificados.length === 0) return;
-    const alSalir = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", alSalir);
-    return () => window.removeEventListener("beforeunload", alSalir);
-  }, [modificados.length]);
+  // Avisa al cerrar la pestaña Y al usar el menú, la paginación o los filtros (antes se perdía en silencio).
+  useAvisoSinGuardar(modificados.length > 0, true);
 
   const cambiar = <K extends keyof ValoresPrecio>(id: number, campo: K, valor: ValoresPrecio[K]) =>
     setValores((v) => ({ ...v, [id]: { ...v[id], [campo]: valor } }));
@@ -164,6 +161,7 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
           const v = valores[f.id];
           const sucia = modificados.includes(f.id);
           const ganancia = textoGanancia(v);
+          const advertencia = sucia ? advertenciaDeFila(base[f.id], v) : null;
           return (
             <li
               key={f.id}
@@ -219,6 +217,9 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
                 />
                 <span className="lg:sr-only">Disponible</span>
               </label>
+              {advertencia ? (
+                <p className="text-sm font-medium text-ev-dorado-oscuro lg:col-span-full">⚠ {advertencia}</p>
+              ) : null}
               {errores[f.id] ? (
                 <p role="alert" className="text-sm text-destructive lg:col-span-full">
                   {errores[f.id]}

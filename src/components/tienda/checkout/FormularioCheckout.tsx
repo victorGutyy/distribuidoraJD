@@ -10,6 +10,7 @@ import { CampoCheckout } from "@/components/tienda/checkout/CampoCheckout";
 import { useResumenCarrito } from "@/components/tienda/carrito/useResumenCarrito";
 import { aEntradas } from "@/lib/carrito";
 import { formatCOP } from "@/lib/formato";
+import { claveParaPedido, firmaDelCarrito, leerClaveGuardada } from "@/lib/idempotencia";
 import {
   CLAVE_CLIENTE,
   CLAVE_ULTIMO_PEDIDO,
@@ -43,6 +44,19 @@ const VACIO: Campos = {
   web: "",
 };
 const NOMBRES = new Set(Object.keys(VACIO));
+const CLAVE_INTENTO = "ev-intento-pedido";
+
+/** Clave de este intento de compra: se guarda en la pestaña para que un reintento la reutilice. */
+function claveDelIntento(firma: string): string {
+  const generar = () => crypto.randomUUID();
+  try {
+    const nueva = claveParaPedido(leerClaveGuardada(sessionStorage.getItem(CLAVE_INTENTO)), firma, generar);
+    sessionStorage.setItem(CLAVE_INTENTO, JSON.stringify(nueva));
+    return nueva.clave;
+  } catch {
+    return generar();
+  }
+}
 
 /**
  * Formulario del checkout (RF-09), con react-hook-form. Se valida con el MISMO
@@ -98,7 +112,7 @@ export function FormularioCheckout() {
     : r.items.length === 0
       ? "Tu carrito está vacío."
       : r.hayAgotados
-        ? "Quita los productos agotados de tu carrito."
+        ? "Hay productos agotados en tu carrito."
         : r.faltaMinimo > 0
           ? `Te faltan ${formatCOP(r.faltaMinimo)} para el pedido mínimo.`
           : !r.entrega || !r.entrega.fecha
@@ -109,8 +123,14 @@ export function FormularioCheckout() {
     setEnviando(true);
     setErrorGeneral(null);
     try {
-      const respuesta = await crearPedido({ ...valores, acepta_datos: valores.acepta_datos as true, ...ctx });
+      const clave_idempotencia = claveDelIntento(firmaDelCarrito(r.items, r.total));
+      const respuesta = await crearPedido({ ...valores, acepta_datos: valores.acepta_datos as true, ...ctx, clave_idempotencia });
       if (respuesta.ok) {
+        try {
+          sessionStorage.removeItem(CLAVE_INTENTO);
+        } catch {
+          /* sin almacenamiento: no pasa nada */
+        }
         try {
           localStorage.setItem(CLAVE_ULTIMO_PEDIDO, JSON.stringify(respuesta.pedido));
           localStorage.setItem(
@@ -140,7 +160,7 @@ export function FormularioCheckout() {
       }
       setErrorGeneral(respuesta.error ?? "Revisa los datos marcados e inténtalo de nuevo.");
     } catch {
-      setErrorGeneral("Se perdió la conexión. Tu pedido no se envió; inténtalo de nuevo.");
+      setErrorGeneral("Se perdió la conexión y no sabemos si tu pedido llegó. Vuelve a pulsar «Confirmar pedido»: si ya había llegado, no se duplicará.");
     } finally {
       setEnviando(false);
     }
@@ -214,7 +234,16 @@ export function FormularioCheckout() {
         ) : null}
       </div>
 
-      {bloqueo ? <p className="text-sm text-muted-foreground">{bloqueo}</p> : null}
+      {bloqueo ? (
+        <p className="text-sm text-muted-foreground">
+          {bloqueo}{" "}
+          {r.hayAgotados ? (
+            <Link href="/carrito" className="font-semibold text-ev-azul underline">
+              Revisar el carrito
+            </Link>
+          ) : null}
+        </p>
+      ) : null}
 
       <button
         type="submit"

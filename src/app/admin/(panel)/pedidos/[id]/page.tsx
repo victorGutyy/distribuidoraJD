@@ -7,10 +7,12 @@ import { AccionesPedido } from "@/components/admin/pedidos/AccionesPedido";
 import { EditorItemsPedido } from "@/components/admin/pedidos/EditorItemsPedido";
 import { GananciaPedido } from "@/components/admin/pedidos/GananciaPedido";
 import { InsigniaEstado } from "@/components/admin/pedidos/InsigniaEstado";
+import { ReprogramarPedido } from "@/components/admin/pedidos/ReprogramarPedido";
 import { textoZona } from "@/components/admin/pedidos/TablaPedidos";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requerirSeccion } from "@/lib/auth";
+import { ahoraEnBogota } from "@/lib/entregas";
 import { formatCOP, formatFechaDia, formatFechaHora } from "@/lib/formato";
 import {
   celularParaWhatsApp,
@@ -18,6 +20,7 @@ import {
   ETIQUETA_ESTADO,
   puedeCambiarEstado,
   puedeEditarItems,
+  puedeReprogramar,
 } from "@/lib/pedidos";
 import { puedeVer } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
@@ -189,9 +192,27 @@ async function ContenidoPedido({ params }: { params: Props["params"] }) {
               <CardTitle>Estado del pedido</CardTitle>
             </CardHeader>
             <CardContent>
-              <AccionesPedido pedidoId={id} estado={estado} puede={puedeEstado} />
+              <AccionesPedido pedidoId={id} numero={p.numero ?? ""} total={p.total ?? 0} estado={estado} puede={puedeEstado} />
             </CardContent>
           </Card>
+
+          {puedeEstado && puedeReprogramar(estado) ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Entrega</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReprogramarPedido
+                  pedidoId={id}
+                  fechaActual={p.fecha_entrega_estimada}
+                  direccionActual={p.direccion_entrega}
+                  notasActuales={p.notas}
+                  recogeEnBodega={Boolean(p.recoge_en_bodega)}
+                  hoy={ahoraEnBogota(new Date()).fecha}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>

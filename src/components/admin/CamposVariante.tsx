@@ -137,6 +137,7 @@ export function CamposVariante({
           onClick={onQuitar}
           disabled={total === 1}
           aria-label={`Quitar la presentación ${index + 1}`}
+          title="Se elimina de verdad al guardar el producto"
         >
           <Trash2 aria-hidden />
           Quitar

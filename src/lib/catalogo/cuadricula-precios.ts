@@ -124,3 +124,21 @@ export function idsModificados(
     .map(Number)
     .filter((id) => base[id] !== undefined && filaCambiada(base[id], actual[id]));
 }
+
+/**
+ * Advertencia de «sentido común» para una fila editada (no bloquea el guardado):
+ * - vaciar el precio de la unidad deja la presentación sin precio y la oculta de la tienda;
+ * - cambiar el precio más de un 50 % suele ser un error de digitación (3200 → 320).
+ */
+export function advertenciaDeFila(base: ValoresPrecio, actual: ValoresPrecio): string | null {
+  const antes = canonico("precio_unidad", base.precio_unidad);
+  const ahora = canonico("precio_unidad", actual.precio_unidad);
+  if (antes === ahora) return null;
+  if (antes !== "" && ahora === "") return "Quedará sin precio y se ocultará de la tienda.";
+  const a = Number(antes);
+  const b = Number(ahora);
+  if (antes !== "" && a > 0 && Number.isFinite(b) && Math.abs(b - a) / a > 0.5) {
+    return `El precio cambia más de un 50 % (de ${a} a ${b}). Revisa que no sea un error de digitación.`;
+  }
+  return null;
+}

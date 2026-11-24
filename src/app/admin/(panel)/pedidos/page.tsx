@@ -17,7 +17,7 @@ import {
   urlPedidos,
 } from "@/lib/filtros-pedidos";
 import { formatCOP, formatFechaDia } from "@/lib/formato";
-import { esEstadoPedido } from "@/lib/pedidos";
+import { ESTADOS_ABIERTOS, esEstadoPedido } from "@/lib/pedidos";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +71,22 @@ async function ContenidoPedidos({ searchParams }: { searchParams: Params }) {
   }
   const { data, count, error } = await consulta;
   const pedidos = (data ?? []) as FilaPedido[];
+
+  // Pedidos de días anteriores que siguen sin resolverse: si no, desaparecen de la ruta y se olvidan (P-01).
+  let atrasados: FilaPedido[] = [];
+  if (ruta && !error) {
+    let q = supabase
+      .from("v_pedidos_admin")
+      .select("*")
+      .lt("fecha_entrega_estimada", ahoraEnBogota(new Date()).fecha)
+      .in("estado", [...ESTADOS_ABIERTOS])
+      .order("fecha_entrega_estimada")
+      .order("numero")
+      .limit(100);
+    if (filtros.sector) q = q.eq("sector_id", filtros.sector);
+    const { data: viejos } = await q;
+    atrasados = (viejos ?? []) as FilaPedido[];
+  }
   const total = count ?? pedidos.length;
 
   const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA_PEDIDOS));
@@ -111,12 +127,21 @@ async function ContenidoPedidos({ searchParams }: { searchParams: Params }) {
         <p role="alert" className="rounded-xl border border-destructive p-4 text-sm text-destructive">
           No pudimos cargar los pedidos. Inténtalo de nuevo.
         </p>
+      ) : ruta ? (
+        <>
+          {atrasados.length > 0 ? <PedidosAtrasados pedidos={atrasados} /> : null}
+          {pedidos.length === 0 ? (
+            <p className="rounded-xl border bg-background p-6 text-center text-sm text-muted-foreground">
+              No hay pedidos para entregar ese día.
+            </p>
+          ) : (
+            <VistaRuta pedidos={pedidos} />
+          )}
+        </>
       ) : pedidos.length === 0 ? (
         <p className="rounded-xl border bg-background p-6 text-center text-sm text-muted-foreground">
-          {ruta ? "No hay pedidos para entregar ese día." : "Ningún pedido coincide con estos filtros."}
+          Ningún pedido coincide con estos filtros.
         </p>
-      ) : ruta ? (
-        <VistaRuta pedidos={pedidos} />
       ) : (
         <>
           <TablaPedidos pedidos={pedidos} />
@@ -128,6 +153,34 @@ async function ContenidoPedidos({ searchParams }: { searchParams: Params }) {
         </>
       )}
     </div>
+  );
+}
+
+/** Bloque rojo con los pedidos cuya fecha ya pasó y siguen abiertos: hay que entregarlos o reprogramarlos. */
+function PedidosAtrasados({ pedidos }: { pedidos: FilaPedido[] }) {
+  return (
+    <section aria-labelledby="atrasados" className="rounded-xl border border-destructive bg-destructive/5">
+      <h2 id="atrasados" className="border-b border-destructive/30 px-4 py-3 text-base font-bold text-destructive">
+        Atrasados ({pedidos.length}): su fecha ya pasó y siguen abiertos
+      </h2>
+      <ul className="divide-y divide-destructive/20">
+        {pedidos.map((p) => (
+          <li key={p.id} className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[8rem_1fr_auto_auto] sm:items-center sm:gap-4">
+            <Link href={`/admin/pedidos/${p.id}`} className="font-semibold text-ev-azul hover:underline">
+              {p.numero}
+            </Link>
+            <span>
+              <b>{p.cliente_nombre}</b>
+              <span className="block text-xs text-muted-foreground">
+                Era para el {formatFechaDia(p.fecha_entrega_estimada)} · {p.recoge_en_bodega ? "Recoge en bodega" : textoZona(p)}
+              </span>
+            </span>
+            <span className="tabular-nums">{formatCOP(p.total ?? 0)}</span>
+            {p.estado && esEstadoPedido(p.estado) ? <InsigniaEstado estado={p.estado} /> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

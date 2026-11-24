@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advertenciaDeFila,
   aFilaPrecio,
   costoCambiado,
   filaCambiada,
@@ -125,5 +126,21 @@ describe("edicionPrecioSchema (editor rápido)", () => {
     expect(edicionPrecioSchema.safeParse({ ...ok, en_oferta: true, precio_oferta: "3200" }).success).toBe(false);
     expect(edicionPrecioSchema.safeParse({ ...ok, en_oferta: true, precio_oferta: "2900" }).success).toBe(true);
     expect(edicionPrecioSchema.safeParse({ ...ok, precio_unidad: "12,5" }).success).toBe(false);
+  });
+});
+
+describe("advertenciaDeFila", () => {
+  const v = (precio_unidad: string) => ({ ...valoresDesdeFila(fila), precio_unidad });
+  it("avisa si se vacía el precio (la presentación quedaría oculta)", () => {
+    expect(advertenciaDeFila(v("3200"), v(""))).toMatch(/ocultará/);
+  });
+  it("avisa de un cambio de más del 50 %", () => {
+    expect(advertenciaDeFila(v("3200"), v("320"))).toMatch(/50 %/);
+    expect(advertenciaDeFila(v("1000"), v("1600"))).toMatch(/50 %/);
+  });
+  it("no avisa de cambios normales ni cuando antes no había precio", () => {
+    expect(advertenciaDeFila(v("3200"), v("3400"))).toBeNull();
+    expect(advertenciaDeFila(v(""), v("3200"))).toBeNull();
+    expect(advertenciaDeFila(v("3200"), v("3.200"))).toBeNull();
   });
 });

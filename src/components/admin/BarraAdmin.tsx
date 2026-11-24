@@ -15,6 +15,8 @@ import {
   Tag,
   Tags,
   Users,
+  Volume2,
+  VolumeX,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -23,6 +25,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cerrarSesion } from "@/app/admin/actions";
 import { Logo } from "@/components/tienda/Logo";
+import { useAvisoPedidosNuevos } from "@/components/admin/useAvisoPedidosNuevos";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -56,6 +59,8 @@ type Props = {
 export function BarraAdmin({ nombre, rol, items }: Props) {
   const pathname = usePathname();
   const [abierto, setAbierto] = useState(false);
+  const conPedidos = items.some((i) => i.seccion === "pedidos" && i.disponible);
+  const { nuevos, sonido, alternarSonido } = useAvisoPedidosNuevos(conPedidos);
 
   const esActivo = (item: ItemMenu) =>
     item.seccion === "dashboard"
@@ -141,7 +146,15 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
                     )}
                   >
                     <Icono className="size-4" aria-hidden />
-                    {item.etiqueta}
+                    <span className="flex-1">{item.etiqueta}</span>
+                    {item.seccion === "pedidos" && nuevos > 0 ? (
+                      <span
+                        className="min-w-6 rounded-full bg-ev-oferta px-2 py-0.5 text-center text-xs font-bold text-white"
+                        aria-label={`${nuevos} ${nuevos === 1 ? "pedido nuevo" : "pedidos nuevos"}`}
+                      >
+                        {nuevos}
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
               );
@@ -150,6 +163,17 @@ export function BarraAdmin({ nombre, rol, items }: Props) {
         </nav>
 
         <div className="border-t px-5 py-4">
+          {conPedidos ? (
+            <button
+              type="button"
+              onClick={alternarSonido}
+              aria-pressed={sonido}
+              className="mb-3 flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 text-sm hover:bg-muted"
+            >
+              {sonido ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
+              Sonido de pedidos: {sonido ? "activado" : "apagado"}
+            </button>
+          ) : null}
           <p className="truncate text-sm font-medium">{nombre}</p>
           <p className="mb-3 text-xs text-muted-foreground">
             {ETIQUETA_ROL[rol]}

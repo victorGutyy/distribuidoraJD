@@ -14,6 +14,9 @@ import {
   esFinal,
   puedeCambiarEstado,
   puedeCancelarse,
+  puedeMarcarNoEntregado,
+  puedeReprogramar,
+  requiereConfirmacion,
   puedeEditarItems,
   siguienteEstado,
 } from "@/lib/pedidos";
@@ -30,7 +33,7 @@ describe("flujo de estados (RF-27)", () => {
 
   it("se cancela mientras no esté despachado", () => {
     expect(["nuevo", "confirmado", "en_preparacion"].every((e) => puedeCancelarse(e as never))).toBe(true);
-    expect(puedeCancelarse("despachado")).toBe(false);
+    expect(puedeCancelarse("despachado")).toBe(true);
     expect(puedeCancelarse("entregado")).toBe(false);
     expect(puedeCancelarse("cancelado")).toBe(false);
   });
@@ -124,5 +127,25 @@ describe("agruparPorSector (pedidos por ruta, HU-04)", () => {
     const g = agruparPorSector([p(1, "Norte"), p(2, null), p(3, "Centro"), p(4, "Norte")]);
     expect(g.map((x) => x.titulo)).toEqual(["Calarcá – Centro", "Calarcá – Norte", "Recoge en bodega"]);
     expect(g[1].pedidos.map((x) => x.id)).toEqual([1, 4]);
+  });
+});
+
+describe("salidas del despachado, reprogramar y confirmaciones", () => {
+  it("un despachado puede marcarse «no entregado»; los demás no", () => {
+    expect(puedeMarcarNoEntregado("despachado")).toBe(true);
+    expect(puedeMarcarNoEntregado("en_preparacion")).toBe(false);
+    expect(puedeMarcarNoEntregado("entregado")).toBe(false);
+  });
+  it("solo se reprograma lo que aún no salió a reparto", () => {
+    expect(["nuevo", "confirmado", "en_preparacion"].every((e) => puedeReprogramar(e as never))).toBe(true);
+    expect(puedeReprogramar("despachado")).toBe(false);
+    expect(puedeReprogramar("entregado")).toBe(false);
+    expect(puedeReprogramar("cancelado")).toBe(false);
+  });
+  it("despachar y entregar piden confirmación; confirmar o preparar no", () => {
+    expect(requiereConfirmacion("despachado")).toBe(true);
+    expect(requiereConfirmacion("entregado")).toBe(true);
+    expect(requiereConfirmacion("confirmado")).toBe(false);
+    expect(requiereConfirmacion("en_preparacion")).toBe(false);
   });
 });

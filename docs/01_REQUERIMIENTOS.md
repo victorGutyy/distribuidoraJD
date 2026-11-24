@@ -170,7 +170,10 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 - Tabla: número, fecha, cliente, celular, municipio/sector, fecha de entrega, total y estado
 - Filtros por estado, fecha, sector y fecha de entrega. Búsqueda por número, nombre o celular
 - Detalle: datos del cliente, ítems (snapshot), totales, notas e **historial de estados**
-- **Estados:** `nuevo → confirmado → en_preparacion → despachado → entregado` / `cancelado` (con motivo obligatorio)
+- **Estados:** `nuevo → confirmado → en_preparacion → despachado → entregado` / `cancelado` (con motivo obligatorio, también desde `despachado`). Un `despachado` que no se entregó vuelve a `confirmado` con motivo («no entregado») para reprogramarse (migración 0013)
+- **Reprogramar:** mover la fecha de entrega, corregir la dirección o las notas mientras el pedido no haya salido (`nuevo`, `confirmado`, `en_preparacion`); motivo obligatorio y fila en el historial. Los pedidos de fechas pasadas que siguen abiertos aparecen como «Atrasados» en la vista por ruta
+- Pasar a `despachado` o `entregado` pide confirmación (no tiene vuelta atrás)
+- **Aviso de pedido nuevo:** correo (Resend) a los destinatarios configurados y, en el panel, insignia con el número de pedidos `nuevo` y sonido opcional
 - Editar cantidades o quitar ítems mientras el pedido esté en `nuevo` o `confirmado` (se recalcula el total y queda registro)
 - Botón "Escribir al cliente por WhatsApp"
 - **Imprimir o descargar en PDF** el pedido como **orden de alistamiento** (para el bodeguero) · D
@@ -252,7 +255,10 @@ clientes          (id, celular UNIQUE, nombre, nombre_negocio, documento, direcc
 pedidos           (id, numero UNIQUE, cliente_id → clientes, sector_id NULL, recoge_en_bodega bool,
                    direccion_entrega, fecha_entrega_estimada date, estado enum_estado_pedido,
                    subtotal int, descuento_mayor int, costo_envio int, total int,
-                   metodo_pago DEFAULT 'contraentrega', notas, ip_origen, created_at, updated_at)
+                   metodo_pago DEFAULT 'contraentrega', notas, ip_origen,
+                   clave_idempotencia uuid NULL UNIQUE (evita pedidos duplicados al reenviar; migración 0013),
+                   acepta_datos_at timestamptz NULL, version_politica text NULL (evidencia del consentimiento, Ley 1581; migración 0013),
+                   created_at, updated_at)
 pedido_items      (id, pedido_id, variante_id NULL, sku, nombre_producto, presentacion,
                    cantidad int, precio_unitario_aplicado int, precio_base int NULL (precio antes del mayoreo; permite recalcular el ahorro al editar cantidades, migración 0010),
                    tipo_precio ('unidad'|'mayor'|'oferta'), subtotal int)

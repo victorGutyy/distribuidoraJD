@@ -1,7 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
+import { armarCorreoPedidoNuevo, leerDestinatarios } from "@/lib/aviso-pedido";
 import type { DatosVigentes } from "@/lib/carrito";
+import { enviarCorreo } from "@/lib/correo";
 import {
   CONFIG_ENTREGA_POR_DEFECTO,
   fechaEntregaBodega,
@@ -9,7 +12,9 @@ import {
   textoFechaCorta,
   textoFechaEntrega,
 } from "@/lib/entregas";
+import { VERSION_POLITICA_DATOS } from "@/lib/legal";
 import { calcularCarrito } from "@/lib/precios";
+import { urlSitio } from "@/lib/sitio";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createPublicClient } from "@/lib/supabase/publico";
 import { obtenerConfigTienda } from "@/lib/tienda/datos";
@@ -148,6 +153,8 @@ export async function crearPedido(entrada: CheckoutEntrada): Promise<ResultadoPe
         costo_envio: costoEnvio,
         total,
         notas: d.notas,
+        clave_idempotencia: d.clave_idempotencia ?? null,
+        version_politica: VERSION_POLITICA_DATOS,
         ip_origen: await ipDeOrigen(),
       },
       items: calculo.lineas.map((l) => {
@@ -198,6 +205,23 @@ export async function crearPedido(entrada: CheckoutEntrada): Promise<ResultadoPe
     costoEnvio,
     total,
   });
+
+  // Aviso por correo al equipo, DESPUÉS de responder al cliente; si falla no afecta el pedido.
+  const destinatarios = leerDestinatarios(process.env.CORREO_AVISO_PEDIDOS);
+  if (destinatarios.length > 0) {
+    const correo = armarCorreoPedidoNuevo({
+      numero,
+      clienteNombre: d.nombre,
+      clienteNegocio: d.nombre_negocio || null,
+      clienteCelular: d.celular,
+      lugar,
+      fechaTexto: textoFechaEntrega(fecha),
+      total,
+      cantidadLineas: lineas.length,
+      enlacePanel: `${urlSitio()}/admin/pedidos`,
+    });
+    after(() => enviarCorreo({ para: destinatarios, ...correo }));
+  }
 
   return {
     ok: true,

@@ -47,6 +47,40 @@ export async function cambiarEstadoPedido(entrada: CambioEstadoEntrada): Promise
   return { ok: true, mensaje: "Estado actualizado." };
 }
 
+const reprogramarSchema = z.object({
+  id: z.number().int().positive(),
+  fecha: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Elige una fecha válida")
+    .nullable(),
+  direccion: z.string().trim().max(150, "La dirección admite máximo 150 caracteres").nullable(),
+  notas: z.string().trim().max(300, "Las notas admiten máximo 300 caracteres").nullable(),
+  motivo: z.string().trim().min(3, "Escribe el motivo del cambio").max(300, "Máximo 300 caracteres"),
+});
+export type ReprogramarEntrada = z.input<typeof reprogramarSchema>;
+
+/** Mueve la fecha de entrega o corrige dirección y notas de un pedido que aún no salió (P-01). */
+export async function reprogramarPedido(entrada: ReprogramarEntrada): Promise<ResultadoPedidoAdmin> {
+  await requerirSeccion("pedidos");
+  const parsed = reprogramarSchema.safeParse(entrada);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos no válidos." };
+  const { id, fecha, direccion, notas, motivo } = parsed.data;
+
+  const supabase = await createClient();
+  // La función SQL acepta NULL («no tocar»), pero los tipos generados marcan estos parámetros como
+  // texto obligatorio: se pasa null con un cast puntual.
+  const sinCambio = null as unknown as string;
+  const { error } = await supabase.rpc("reprogramar_pedido", {
+    p_pedido_id: id,
+    p_fecha: fecha ?? sinCambio,
+    p_direccion: direccion ?? sinCambio,
+    p_notas: notas ?? sinCambio,
+    p_motivo: motivo,
+  });
+  if (error) return { ok: false, error: mensajeDeError(error) };
+  return { ok: true, mensaje: "Pedido actualizado." };
+}
+
 const edicionSchema = z.object({
   id: z.number().int().positive(),
   items: z
@@ -75,4 +109,20 @@ export async function editarItemsPedido(entrada: EdicionItemsEntrada): Promise<R
   });
   if (error) return { ok: false, error: mensajeDeError(error) };
   return { ok: true, mensaje: "Pedido actualizado." };
+}
+
+/**
+ * Cantidad de pedidos en estado «nuevo» (sin atender) que ve esta persona. El menú la consulta
+ * cada cierto tiempo para mostrar la insignia y avisar cuando llega uno. RLS limita lo que cuenta
+ * (un vendedor solo cuenta los de sus zonas). Devuelve null si no se pudo leer.
+ */
+export async function contarPedidosNuevos(): Promise<number | null> {
+  await requerirSeccion("pedidos");
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("pedidos")
+    .select("id", { count: "exact", head: true })
+    .eq("estado", "nuevo");
+  if (error) return null;
+  return count ?? 0;
 }

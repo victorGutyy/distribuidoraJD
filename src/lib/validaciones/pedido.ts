@@ -58,6 +58,8 @@ export const checkoutSchema = z
     acepta_datos: z.literal(true, { error: "Debes aceptar la política de tratamiento de datos" }),
     /** Campo trampa (honeypot): una persona nunca lo ve; un bot lo llena. */
     web: z.string().max(0).optional().default(""),
+    /** Clave única del intento de compra: un reintento con la misma clave no crea un segundo pedido. */
+    clave_idempotencia: z.string().uuid().optional(),
     items: z.array(lineaPedidoSchema).min(1, "Tu carrito está vacío").max(MAX_ITEMS_CARRITO),
     /**
      * Total que la persona está viendo. Si al recalcular en el servidor es otro

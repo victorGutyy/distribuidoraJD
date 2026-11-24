@@ -1,6 +1,7 @@
 "use client";
 
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/tienda/Logo";
@@ -14,18 +15,21 @@ import { useCarrito } from "@/stores/carrito";
 export function FilaCarrito({ item, linea }: { item: ItemCarrito; linea: LineaCalculada | undefined }) {
   const cambiar = useCarrito((s) => s.cambiarCantidad);
   const quitar = useCarrito((s) => s.quitar);
+  // Mientras la persona escribe, el campo guarda su texto; un campo vacío NO quita el producto
+  // (antes borrar el «1» para escribir otro número sacaba el producto del carrito).
+  const [borrador, setBorrador] = useState<string | null>(null);
   const nombreCompleto = item.presentacion ? `${item.nombre}, ${item.presentacion}` : item.nombre;
 
   return (
     <li className="grid grid-cols-[4rem_1fr] gap-3 rounded-xl border bg-background p-3">
       <Link
         href={`/producto/${item.productoSlug}`}
-        className="relative block size-16 overflow-hidden rounded-lg bg-muted"
+        className={`relative block size-16 overflow-hidden rounded-lg border ${item.imagen ? "bg-white" : "bg-muted"}`}
         tabIndex={-1}
         aria-hidden="true"
       >
         {item.imagen ? (
-          <Image src={item.imagen} alt="" fill sizes="64px" className="object-cover" />
+          <Image src={item.imagen} alt="" fill sizes="64px" className="object-contain p-1" />
         ) : (
           <span className="flex size-full items-center justify-center">
             <Logo className="w-8 opacity-30 grayscale" sizes="32px" />
@@ -45,7 +49,7 @@ export function FilaCarrito({ item, linea }: { item: ItemCarrito; linea: LineaCa
             type="button"
             onClick={() => quitar(item.varianteId)}
             aria-label={`Quitar ${nombreCompleto} del carrito`}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             <Trash2 className="size-4" aria-hidden="true" />
           </button>
@@ -62,8 +66,9 @@ export function FilaCarrito({ item, linea }: { item: ItemCarrito; linea: LineaCa
             <button
               type="button"
               aria-label={`Una unidad menos de ${nombreCompleto}`}
+              disabled={item.cantidad <= 1}
               onClick={() => cambiar(item.varianteId, item.cantidad - 1)}
-              className="flex size-9 items-center justify-center rounded-l-lg border hover:bg-muted"
+              className="flex size-11 items-center justify-center rounded-l-lg border hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 sm:size-9"
             >
               <Minus className="size-4" aria-hidden="true" />
             </button>
@@ -73,15 +78,23 @@ export function FilaCarrito({ item, linea }: { item: ItemCarrito; linea: LineaCa
               min={1}
               max={MAX_CANTIDAD_ITEM}
               aria-label={`Cantidad de ${nombreCompleto}`}
-              value={item.cantidad}
-              onChange={(e) => cambiar(item.varianteId, Number(e.target.value))}
-              className="h-9 w-14 [appearance:textfield] border-y bg-background text-center text-sm tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-inner-spin-button]:appearance-none"
+              value={borrador ?? String(item.cantidad)}
+              onChange={(e) => {
+                setBorrador(e.target.value);
+                const n = Number.parseInt(e.target.value, 10);
+                if (Number.isFinite(n) && n >= 1) cambiar(item.varianteId, n);
+              }}
+              onBlur={() => setBorrador(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              className="h-11 w-14 sm:h-9 [appearance:textfield] border-y bg-background text-center text-sm tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
               type="button"
               aria-label={`Una unidad más de ${nombreCompleto}`}
               onClick={() => cambiar(item.varianteId, item.cantidad + 1)}
-              className="flex size-9 items-center justify-center rounded-r-lg border hover:bg-muted"
+              className="flex size-11 items-center justify-center rounded-r-lg border hover:bg-muted sm:size-9"
             >
               <Plus className="size-4" aria-hidden="true" />
             </button>
