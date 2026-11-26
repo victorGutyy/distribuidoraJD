@@ -54,3 +54,4 @@ next-env.d.ts
 
 # Listas de precios del proveedor y su emparejamiento (datos internos; el repo es público)
 /data/precios_ev/
+/data/fotos_maestro/
