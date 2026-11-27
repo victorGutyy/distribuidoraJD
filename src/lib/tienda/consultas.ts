@@ -21,8 +21,8 @@ import { aTarjeta, type FilaTienda, type ProductoTarjeta } from "@/lib/tienda/ta
 const COLUMNAS_TARJETA =
   "id, nombre, slug, marca_nombre, categoria_nombre, variantes_visibles, precio_desde, " +
   "hay_oferta, disponible, es_nuevo, destacado, imagen_url, imagen_miniatura_url, " +
-  "presentacion_principal, precio_principal, precio_mayor_principal, " +
-  "cantidad_min_mayor_principal, en_oferta_principal, precio_oferta_principal, " +
+  "presentacion_principal, precio_principal, " +
+  "en_oferta_principal, precio_oferta_principal, " +
   "variante_principal_id, disponible_principal, created_at";
 
 export type ResultadoCatalogo = {
@@ -229,8 +229,8 @@ export type DetalleProducto = {
 
 const COLUMNAS_VARIANTE =
   "id, sku, nombre_presentacion, contenido_valor, contenido_unidad, unidad_venta, " +
-  "unidades_por_empaque, peso_g, alto_cm, ancho_cm, largo_cm, precio_unidad, precio_mayor, " +
-  "cantidad_min_mayor, en_oferta, precio_oferta, disponible, orden";
+  "unidades_por_empaque, peso_g, alto_cm, ancho_cm, largo_cm, precio_unidad, " +
+  "en_oferta, precio_oferta, disponible, orden";
 
 /**
  * Un producto visible con todas sus presentaciones, imágenes y hasta 4

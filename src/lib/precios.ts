@@ -4,28 +4,29 @@
  * que ve el cliente es lo mismo que se calcula al crear el pedido.
  *
  * Todo en pesos COLOMBIANOS ENTEROS (RN-05): nunca se usan decimales.
+ *
+ * Regla de descuento (RN-02/RN-03, vigente desde nov-2026): las compras cuyo subtotal
+ * (productos, con las ofertas ya aplicadas, sin envío) llega al monto mínimo reciben un
+ * porcentaje de descuento (hoy 5 % desde $500.000). El precio por mayor de cada producto
+ * ya no se usa. Para que lo guardado en los pedidos y la ganancia sigan cuadrando, el
+ * descuento se aplica a cada línea: cada precio unitario baja el porcentaje y se redondea
+ * al peso más cercano.
  */
 
-/**
- * Cuándo rige el precio por mayor: por cantidad de cada producto (RN-02), por el monto
- * de todo el pedido (RN-03) o "ambas" (basta con que se cumpla una).
- */
-export type ReglaMayoreo = "por_cantidad" | "por_monto" | "ambas";
 export type TipoPrecio = "unidad" | "oferta" | "mayor";
 
 /** Lo que se necesita de una presentación para calcular su precio. */
 export type VariantePrecio = {
   precioUnidad: number;
-  precioMayor: number | null;
-  cantidadMinMayor: number | null;
   enOferta: boolean;
   precioOferta: number | null;
 };
 
 export type ConfigPrecios = {
-  regla: ReglaMayoreo;
-  /** Para "por_monto" y "ambas": desde cuánto (a precio unidad) todo lo que tenga precio por mayor lo usa. 0 = apagado. */
-  umbralMonto: number;
+  /** Subtotal desde el cual rige el descuento (pesos). 0 = descuento apagado. */
+  montoMinimo: number;
+  /** Porcentaje de descuento (1 a 99). 0 = descuento apagado. */
+  porcentaje: number;
 };
 
 export type LineaEntrada = { varianteId: number; cantidad: number };
@@ -35,8 +36,9 @@ export type LineaCalculada = {
   cantidad: number;
   /** Precio por unidad que se cobra. */
   precioUnitario: number;
+  /** "mayor" = lleva el descuento por monto (así se guarda en pedido_items). */
   tipo: TipoPrecio;
-  /** Precio antes del mayoreo: el de oferta si hay, si no el normal. */
+  /** Precio antes del descuento: el de oferta si hay, si no el normal. */
   precioBase: number;
   /** cantidad × precioUnitario (lo que vale la línea). */
   subtotal: number;
@@ -44,14 +46,16 @@ export type LineaCalculada = {
 
 export type ResultadoCarrito = {
   lineas: LineaCalculada[];
-  /** Suma a precio base (con las ofertas, sin el mayoreo). Es el "Subtotal" del pedido. */
+  /** Suma a precio base (con las ofertas, sin el descuento). Es el "Subtotal" del pedido. */
   subtotal: number;
-  /** Lo que se ahorra por precio por mayor. */
+  /** Lo que se ahorra por el descuento del pedido. */
   descuentoMayor: number;
   /** subtotal − descuentoMayor (sin envío). */
   total: number;
-  /** true si el mayoreo por monto (RN-03) quedó activo. */
-  mayoreoPorMonto: boolean;
+  /** true si el descuento por monto quedó activo. */
+  descuentoActivo: boolean;
+  /** Cuánto falta de subtotal para el descuento (0 si ya rige o está apagado). */
+  faltaParaDescuento: number;
   /** Ids que se pidieron pero no se encontraron (no entran en la cuenta). */
   desconocidas: number[];
 };
@@ -59,7 +63,18 @@ export type ResultadoCarrito = {
 const esPrecio = (n: number | null): n is number =>
   n !== null && Number.isInteger(n) && n > 0;
 
-/** Precio sin mayoreo: el de oferta si es válido y más barato que el normal. */
+/** ¿El descuento está configurado (monto y porcentaje válidos)? */
+export function descuentoConfigurado(config: ConfigPrecios): boolean {
+  return (
+    Number.isInteger(config.montoMinimo) &&
+    config.montoMinimo > 0 &&
+    Number.isFinite(config.porcentaje) &&
+    config.porcentaje > 0 &&
+    config.porcentaje < 100
+  );
+}
+
+/** Precio sin descuento por monto: el de oferta si es válido y más barato que el normal. */
 export function precioBase(v: VariantePrecio): { precio: number; tipo: "unidad" | "oferta" } {
   if (v.enOferta && esPrecio(v.precioOferta) && v.precioOferta < v.precioUnidad) {
     return { precio: v.precioOferta, tipo: "oferta" };
@@ -67,27 +82,26 @@ export function precioBase(v: VariantePrecio): { precio: number; tipo: "unidad" 
   return { precio: v.precioUnidad, tipo: "unidad" };
 }
 
-/**
- * RN-02: ¿esta cantidad alcanza el mayoreo por cantidad? Si la presentación tiene
- * precio por mayor pero no cantidad mínima, el precio por mayor rige desde la
- * primera unidad (así lo muestra también la tienda).
- */
-export function alcanzaMayorPorCantidad(v: VariantePrecio, cantidad: number): boolean {
-  return esPrecio(v.precioMayor) && cantidad >= (v.cantidadMinMayor ?? 1);
+/** Precio normal con el porcentaje de descuento, al peso más cercano. */
+export function precioConDescuento(precioUnidad: number, porcentaje: number): number {
+  return Math.round((precioUnidad * (100 - porcentaje)) / 100);
 }
 
 /**
- * Precio de UNA línea. `aplicaMayor` dice si el mayoreo está activo para ella
- * (por cantidad o por monto). RN-04: siempre se cobra el menor entre normal,
- * oferta y mayor; el mayor solo gana si es estrictamente más barato.
+ * Precio de UNA línea. RN-04: siempre se cobra el menor entre la oferta y el precio con
+ * descuento, así que una oferta mejor que el descuento NO se rebaja otra vez.
  */
 export function precioDeLinea(
   v: VariantePrecio,
-  aplicaMayor: boolean,
+  descuentoActivo: boolean,
+  porcentaje: number,
 ): { precio: number; tipo: TipoPrecio; precioBase: number } {
   const base = precioBase(v);
-  if (aplicaMayor && esPrecio(v.precioMayor) && v.precioMayor < base.precio) {
-    return { precio: v.precioMayor, tipo: "mayor", precioBase: base.precio };
+  if (descuentoActivo) {
+    const conDescuento = precioConDescuento(v.precioUnidad, porcentaje);
+    if (conDescuento > 0 && conDescuento < base.precio) {
+      return { precio: conDescuento, tipo: "mayor", precioBase: base.precio };
+    }
   }
   return { precio: base.precio, tipo: base.tipo, precioBase: base.precio };
 }
@@ -115,23 +129,17 @@ export function calcularCarrito(
   const conocidas = lineasEntrada.filter((l) => variantes.has(l.varianteId));
   const desconocidas = lineasEntrada.filter((l) => !variantes.has(l.varianteId)).map((l) => l.varianteId);
 
-  // RN-03: monto a PRECIO UNIDAD de todo el carrito.
-  const montoAPrecioUnidad = conocidas.reduce(
-    (suma, l) => suma + l.cantidad * (variantes.get(l.varianteId) as VariantePrecio).precioUnidad,
+  // El monto que cuenta es el subtotal que ve el cliente: a precio base (con las ofertas).
+  const montoBase = conocidas.reduce(
+    (suma, l) => suma + l.cantidad * precioBase(variantes.get(l.varianteId) as VariantePrecio).precio,
     0,
   );
-  const mayoreoPorMonto =
-    config.regla !== "por_cantidad" && config.umbralMonto > 0 && montoAPrecioUnidad >= config.umbralMonto;
+  const configurado = descuentoConfigurado(config);
+  const descuentoActivo = configurado && montoBase >= config.montoMinimo;
 
   const lineas: LineaCalculada[] = conocidas.map((l) => {
     const v = variantes.get(l.varianteId) as VariantePrecio;
-    const aplicaMayor =
-      config.regla === "por_monto"
-        ? mayoreoPorMonto
-        : config.regla === "ambas"
-          ? mayoreoPorMonto || alcanzaMayorPorCantidad(v, l.cantidad)
-          : alcanzaMayorPorCantidad(v, l.cantidad);
-    const p = precioDeLinea(v, aplicaMayor);
+    const p = precioDeLinea(v, descuentoActivo, config.porcentaje);
     return {
       varianteId: l.varianteId,
       cantidad: l.cantidad,
@@ -144,7 +152,22 @@ export function calcularCarrito(
 
   const subtotal = lineas.reduce((s, l) => s + l.cantidad * l.precioBase, 0);
   const total = lineas.reduce((s, l) => s + l.subtotal, 0);
-  return { lineas, subtotal, descuentoMayor: subtotal - total, total, mayoreoPorMonto, desconocidas };
+  return {
+    lineas,
+    subtotal,
+    descuentoMayor: subtotal - total,
+    total,
+    descuentoActivo,
+    faltaParaDescuento: configurado && !descuentoActivo ? config.montoMinimo - montoBase : 0,
+    desconocidas,
+  };
+}
+
+/** «Compras desde $500.000: 5 % de descuento»; null si el descuento no está configurado. */
+export function textoDescuento(config: ConfigPrecios, formatear: (pesos: number) => string): string | null {
+  return descuentoConfigurado(config)
+    ? `Compras desde ${formatear(config.montoMinimo)}: ${config.porcentaje} % de descuento`
+    : null;
 }
 
 /** Lo que falta para llegar al pedido mínimo (0 si ya lo alcanzó o no hay mínimo). */

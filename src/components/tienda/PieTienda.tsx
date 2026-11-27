@@ -12,7 +12,7 @@ export function PieTienda({ config }: { config: ConfigTienda }) {
         <div className="grid content-start gap-3">
           <Logo className="w-16" sizes="64px" />
           <p className="text-sm text-white/80">
-            Pedidos por mayor y al detal en el Quindío. Arma tu pedido, envíalo por
+            Pedidos en el Quindío. Arma tu pedido, envíalo por
             WhatsApp y paga contraentrega.
           </p>
         </div>

@@ -47,25 +47,29 @@ export const contactoSchema = z.object({
   mensaje_barra: textoOpcional(120),
 });
 
-export const REGLAS_MAYOREO = [
-  { valor: "por_cantidad", etiqueta: "Por cantidad de cada producto", ayuda: "Cada producto tiene su cantidad mínima para el precio por mayor." },
-  { valor: "por_monto", etiqueta: "Por el monto de todo el pedido", ayuda: "Si el pedido supera el monto, todo lo que tenga precio por mayor lo usa." },
-  { valor: "ambas", etiqueta: "Ambas (basta con que se cumpla una)", ayuda: "Rige por cantidad o por monto, lo que se cumpla primero." },
-] as const;
+/** Porcentaje entero de 0 a 99; vacío = 0. */
+const porcentajeCero = z
+  .string()
+  .trim()
+  .refine((v) => v === "" || (/^\d{1,2}$/.test(v) && Number(v) <= 99), "Escribe un porcentaje entero de 0 a 99")
+  .transform((v) => (v === "" ? 0 : Number(v)));
 
+/**
+ * Pedido mínimo y descuento por monto: desde `descuento_monto_minimo` pesos de compra se
+ * descuenta `descuento_porcentaje` %. Si se llena uno, hay que llenar el otro (los dos en 0 = sin descuento).
+ */
 export const comprasSchema = z
   .object({
     pedido_minimo: pesosCero,
-    regla_mayoreo: z.enum(["por_cantidad", "por_monto", "ambas"], { error: "Elige una regla" }),
-    umbral_mayor_monto: pesosCero,
+    descuento_monto_minimo: pesosCero,
+    descuento_porcentaje: porcentajeCero,
   })
   .superRefine((v, ctx) => {
-    if (v.regla_mayoreo !== "por_cantidad" && v.umbral_mayor_monto <= 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["umbral_mayor_monto"],
-        message: "Escribe desde qué monto rige el precio por mayor",
-      });
+    if (v.descuento_monto_minimo > 0 && v.descuento_porcentaje <= 0) {
+      ctx.addIssue({ code: "custom", path: ["descuento_porcentaje"], message: "Escribe el porcentaje de descuento (ej. 5)" });
+    }
+    if (v.descuento_porcentaje > 0 && v.descuento_monto_minimo <= 0) {
+      ctx.addIssue({ code: "custom", path: ["descuento_monto_minimo"], message: "Escribe desde qué monto rige el descuento" });
     }
   });
 

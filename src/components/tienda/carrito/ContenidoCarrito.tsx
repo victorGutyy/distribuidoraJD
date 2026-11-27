@@ -9,6 +9,7 @@ import { useTienda } from "@/components/tienda/carrito/ProveedorTienda";
 import { SelectorUbicacion } from "@/components/tienda/carrito/SelectorUbicacion";
 import { useResumenCarrito } from "@/components/tienda/carrito/useResumenCarrito";
 import { formatCOP } from "@/lib/formato";
+import { descuentoConfigurado } from "@/lib/precios";
 import { useCarrito } from "@/stores/carrito";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
  * avisa si algo cambió (RN-06).
  */
 export function ContenidoCarrito({ alContinuar }: { alContinuar?: () => void }) {
-  const { pedidoMinimo } = useTienda();
+  const { pedidoMinimo, precios } = useTienda();
   const r = useResumenCarrito();
   const avisos = useCarrito((s) => s.avisos);
   const descartarAvisos = useCarrito((s) => s.descartarAvisos);
@@ -92,7 +93,7 @@ export function ContenidoCarrito({ alContinuar }: { alContinuar?: () => void }) 
         <dd className="text-right tabular-nums">{formatCOP(r.calculo.subtotal)}</dd>
         {r.calculo.descuentoMayor > 0 ? (
           <>
-            <dt className="text-ev-azul">Ahorro por mayor</dt>
+            <dt className="text-ev-azul">Descuento por tu compra</dt>
             <dd className="text-right text-ev-azul tabular-nums">− {formatCOP(r.calculo.descuentoMayor)}</dd>
           </>
         ) : null}
@@ -103,6 +104,20 @@ export function ContenidoCarrito({ alContinuar }: { alContinuar?: () => void }) 
         <dt className="pt-1 text-base font-bold">Total</dt>
         <dd className="pt-1 text-right text-base font-bold tabular-nums">{formatCOP(r.total)}</dd>
       </dl>
+
+      {descuentoConfigurado(precios) ? (
+        <p
+          aria-live="polite"
+          className={cn(
+            "rounded-lg border p-3 text-sm font-medium",
+            r.calculo.descuentoActivo ? "border-ev-azul bg-ev-azul/5 text-ev-azul" : "border-ev-dorado bg-ev-dorado/10",
+          )}
+        >
+          {r.calculo.descuentoActivo
+            ? `¡Descuento del ${precios.porcentaje} % aplicado a tu compra!`
+            : `Te faltan ${formatCOP(r.calculo.faltaParaDescuento)} para el ${precios.porcentaje} % de descuento (compras desde ${formatCOP(precios.montoMinimo)}).`}
+        </p>
+      ) : null}
 
       {pedidoMinimo > 0 ? (
         <div aria-live="polite" className="grid gap-1">

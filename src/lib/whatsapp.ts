@@ -69,7 +69,7 @@ export function armarMensajePedido(d: DatosMensajePedido, maxCaracteres = 1500):
   ];
 
   const lineas = d.lineas.map((l, i) => {
-    const etiqueta = l.tipo === "mayor" ? " (mayor)" : l.tipo === "oferta" ? " (oferta)" : "";
+    const etiqueta = l.tipo === "mayor" ? " (desc.)" : l.tipo === "oferta" ? " (oferta)" : "";
     const nombre = l.presentacion ? `${l.nombre} ${l.presentacion}` : l.nombre;
     return `${i + 1}. ${nombre} x${l.cantidad} – ${pesoCompacto(l.precioUnitario)} c/u = ${pesoCompacto(l.subtotal)}${etiqueta}`;
   });
@@ -77,7 +77,7 @@ export function armarMensajePedido(d: DatosMensajePedido, maxCaracteres = 1500):
   const pie = [
     "",
     `Subtotal: ${pesoCompacto(d.subtotal)}`,
-    ...(d.descuentoMayor > 0 ? [`Ahorro por mayor: ${pesoCompacto(d.descuentoMayor)}`] : []),
+    ...(d.descuentoMayor > 0 ? [`Descuento por compra: ${pesoCompacto(d.descuentoMayor)}`] : []),
     ...(d.costoEnvio > 0 ? [`Envío: ${pesoCompacto(d.costoEnvio)}`] : []),
     `*Total: ${pesoCompacto(d.total)}*`,
     "Pago: contraentrega",

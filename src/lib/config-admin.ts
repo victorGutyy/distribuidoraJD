@@ -11,8 +11,8 @@ export type ValoresConfigFormulario = {
   mensaje_whatsapp: string;
   mensaje_barra: string;
   pedido_minimo: string;
-  regla_mayoreo: "por_cantidad" | "por_monto" | "ambas";
-  umbral_mayor_monto: string;
+  descuento_monto_minimo: string;
+  descuento_porcentaje: string;
   hora_corte: string;
   dias_no_habiles: string;
   empresa: {
@@ -36,7 +36,6 @@ export function valoresConfigFormulario(filas: readonly FilaConfigCruda[]): Valo
   const por = new Map(filas.map((f) => [f.clave, f.valor]));
   const empresa = esObjeto(por.get("empresa")) ? (por.get("empresa") as Record<string, unknown>) : {};
   const redes = esObjeto(empresa.redes) ? empresa.redes : {};
-  const regla = por.get("regla_mayoreo");
   const hora = txt(por.get("hora_corte"));
   const dias = por.get("dias_no_habiles");
 
@@ -48,8 +47,8 @@ export function valoresConfigFormulario(filas: readonly FilaConfigCruda[]): Valo
     mensaje_whatsapp: txt(por.get("mensaje_whatsapp_flotante")) || "Hola, quiero hacer un pedido en EV Distribuidora",
     mensaje_barra: txt(por.get("mensaje_barra_superior")),
     pedido_minimo: num(por.get("pedido_minimo")),
-    regla_mayoreo: regla === "por_monto" || regla === "ambas" ? regla : "por_cantidad",
-    umbral_mayor_monto: num(por.get("umbral_mayor_monto")),
+    descuento_monto_minimo: num(por.get("descuento_monto_minimo")),
+    descuento_porcentaje: num(por.get("descuento_porcentaje")),
     hora_corte: /^([01]?\d|2[0-3]):[0-5]\d$/.test(hora) ? hora : "17:00",
     dias_no_habiles: Array.isArray(dias) ? dias.filter((d): d is string => typeof d === "string").join("\n") : "",
     empresa: {

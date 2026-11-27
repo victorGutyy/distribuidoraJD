@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PaginaInformativa } from "@/components/tienda/PaginaInformativa";
 import { formatCOP } from "@/lib/formato";
+import { textoDescuento } from "@/lib/precios";
 import { obtenerConfigTienda } from "@/lib/tienda/datos";
 
 export const metadata: Metadata = {
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 
 export default async function PreguntasFrecuentes() {
   const config = await obtenerConfigTienda();
+  const descuento = textoDescuento({ montoMinimo: config.descuentoMonto, porcentaje: config.descuentoPorcentaje }, formatCOP);
   const preguntas: { q: string; a: string }[] = [
     {
       q: "¿Cómo hago un pedido?",
@@ -31,8 +33,10 @@ export default async function PreguntasFrecuentes() {
       a: `Repartimos por rutas, según el municipio y el sector. Al elegir tu sector ves la fecha estimada de entrega. Los pedidos que haces antes de las ${config.horaCorte} del día anterior a tu ruta entran en esa fecha; los demás pasan a la siguiente.`,
     },
     {
-      q: "¿Cómo funciona el precio por mayor?",
-      a: "Algunos productos tienen un precio especial por mayor. El carrito te muestra el precio que aplica y cuánto te falta para alcanzarlo.",
+      q: "¿Hay descuento por comprar más?",
+      a: descuento
+        ? `Sí. ${descuento}. Se aplica solo en el carrito, a todos los productos, y ahí mismo ves cuánto te falta para alcanzarlo. Si un producto ya está en oferta por debajo de ese precio, conserva su oferta.`
+        : "Por ahora no hay descuento por monto de compra.",
     },
     {
       q: "¿Puedo cambiar o cancelar mi pedido?",

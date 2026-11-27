@@ -22,7 +22,7 @@ const datos = (id: number, extra: Partial<DatosVigentes> = {}): DatosVigentes =>
   nombre: `Producto ${id}`,
   presentacion: "500 g",
   imagen: null,
-  precio: { precioUnidad: 1000, precioMayor: null, cantidadMinMayor: null, enOferta: false, precioOferta: null },
+  precio: { precioUnidad: 1000, enOferta: false, precioOferta: null },
   disponible: true,
   ...extra,
 });
@@ -78,7 +78,7 @@ describe("aplicarVigentes (revalidar al abrir el carrito)", () => {
   });
 
   it("actualiza el precio y avisa, conservando la cantidad", () => {
-    const nuevo = datos(1, { precio: { precioUnidad: 1200, precioMayor: null, cantidadMinMayor: null, enOferta: false, precioOferta: null } });
+    const nuevo = datos(1, { precio: { precioUnidad: 1200, enOferta: false, precioOferta: null } });
     const r = aplicarVigentes([item(1, 4)], new Map([[1, nuevo]]));
     expect(r.items[0]).toMatchObject({ cantidad: 4, precio: { precioUnidad: 1200 } });
     expect(r.avisos).toEqual(["El precio de «Producto 1» cambió. Revisa el total."]);
@@ -192,11 +192,11 @@ describe("mensaje de WhatsApp (RF-10)", () => {
         "Entrega: Calarcá – Barrio Centro · jueves 12/11",
         "Dirección: Cra 25 # 30-12",
         "",
-        "1. Lentejas Doña Lupe 400 g x12 – $3.200 c/u = $38.400 (mayor)",
+        "1. Lentejas Doña Lupe 400 g x12 – $3.200 c/u = $38.400 (desc.)",
         "2. Atún La Soberana 140 g x6 – $5.900 c/u = $35.400",
         "",
         "Subtotal: $78.900",
-        "Ahorro por mayor: $4.800",
+        "Descuento por compra: $4.800",
         "*Total: $74.100*",
         "Pago: contraentrega",
       ].join("\n"),
@@ -218,7 +218,7 @@ describe("mensaje de WhatsApp (RF-10)", () => {
     expect(m).not.toContain("Dirección:");
     expect(m).toContain("Notas: Llamar al llegar");
     expect(m).toContain("Envío: $3.000");
-    expect(m).not.toContain("Ahorro por mayor");
+    expect(m).not.toContain("Descuento por compra");
   });
 
   it("un pedido muy largo se recorta sin pasar del límite", () => {

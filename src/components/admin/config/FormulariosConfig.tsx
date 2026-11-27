@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ValoresConfigFormulario } from "@/lib/config-admin";
 import type { EstadoFormulario } from "@/lib/validaciones/comun";
-import { REGLAS_MAYOREO } from "@/lib/validaciones/config";
 
 const INICIAL: EstadoFormulario = {};
 
@@ -106,24 +105,11 @@ export function FormularioContacto({ v }: { v: ValoresConfigFormulario }) {
 
 export function FormularioCompras({ v }: { v: ValoresConfigFormulario }) {
   const [estado, accion, pendiente] = useActionState(guardarCompras, INICIAL);
-  const regla = estado.valores?.regla_mayoreo ?? v.regla_mayoreo;
   return (
-    <Tarjeta titulo="Pedido mínimo y precio por mayor" descripcion="Reglas que se aplican en el carrito y al crear el pedido." estado={estado} pendiente={pendiente} accion={accion}>
+    <Tarjeta titulo="Pedido mínimo y descuento por monto" descripcion="Reglas que se aplican en el carrito y al crear el pedido." estado={estado} pendiente={pendiente} accion={accion}>
       <Campo id="pedido_minimo" nombre="pedido_minimo" etiqueta="Pedido mínimo (pesos)" defaultValue={estado.valores?.pedido_minimo ?? v.pedido_minimo} errores={estado.errores?.pedido_minimo} ayuda="Escribe 0 si no hay pedido mínimo." />
-      <fieldset className="grid gap-1">
-        <legend className="mb-1 text-sm font-medium">¿Cuándo rige el precio por mayor?</legend>
-        {REGLAS_MAYOREO.map((r) => (
-          <label key={r.valor} className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
-            <input type="radio" name="regla_mayoreo" value={r.valor} defaultChecked={regla === r.valor} className="mt-0.5 size-5 accent-ev-azul" />
-            <span>
-              <b>{r.etiqueta}</b>
-              <span className="block text-muted-foreground">{r.ayuda}</span>
-            </span>
-          </label>
-        ))}
-        {estado.errores?.regla_mayoreo ? <p className="text-sm text-red-700">{estado.errores.regla_mayoreo[0]}</p> : null}
-      </fieldset>
-      <Campo id="umbral_mayor_monto" nombre="umbral_mayor_monto" etiqueta="Monto para el precio por mayor (pesos)" defaultValue={estado.valores?.umbral_mayor_monto ?? v.umbral_mayor_monto} errores={estado.errores?.umbral_mayor_monto} ayuda="Solo cuenta si elegiste «por monto» o «ambas»: desde qué total del pedido (a precio normal)." />
+      <Campo id="descuento_monto_minimo" nombre="descuento_monto_minimo" etiqueta="Descuento: desde este monto de compra (pesos)" defaultValue={estado.valores?.descuento_monto_minimo ?? v.descuento_monto_minimo} errores={estado.errores?.descuento_monto_minimo} ayuda="Subtotal de los productos (con las ofertas, sin envío). Ejemplo: 500000. Con 0 no hay descuento." />
+      <Campo id="descuento_porcentaje" nombre="descuento_porcentaje" etiqueta="Descuento: porcentaje" defaultValue={estado.valores?.descuento_porcentaje ?? v.descuento_porcentaje} errores={estado.errores?.descuento_porcentaje} ayuda="Ejemplo: 5. Se rebaja ese porcentaje a cada producto cuando la compra llega al monto. Una oferta mejor que el descuento no se rebaja otra vez." />
     </Tarjeta>
   );
 }

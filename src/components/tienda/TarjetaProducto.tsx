@@ -75,12 +75,6 @@ export function TarjetaProducto({
               </span>
             ) : null}
           </p>
-          {p.mayor ? (
-            <p className="text-xs font-semibold text-ev-dorado-oscuro tabular-nums">
-              Por mayor: {formatCOP(p.mayor.precio)}
-              {p.mayor.desde ? ` desde ${p.mayor.desde} und.` : ""}
-            </p>
-          ) : null}
           {p.masPresentaciones ? (
             <p className="text-xs text-muted-foreground">Más presentaciones</p>
           ) : null}

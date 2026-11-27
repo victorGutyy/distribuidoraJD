@@ -12,9 +12,9 @@ import { imagenPermitida } from "@/lib/tienda/imagenes";
 import type { ProductoTarjeta } from "@/lib/tienda/tarjeta";
 
 export const metadata: Metadata = {
-  title: { absolute: "EV Distribuidora | Víveres, aseo y más por mayor" },
+  title: { absolute: "EV Distribuidora | Víveres, aseo y más al mejor precio" },
   description:
-    "Arma tu pedido por mayor desde el celular, envíalo por WhatsApp y paga contraentrega. Víveres, útiles escolares, aseo, cuidado personal y más en el Quindío.",
+    "Arma tu pedido desde el celular, envíalo por WhatsApp y paga contraentrega. Víveres, útiles escolares, aseo, cuidado personal y más en el Quindío.",
 };
 
 export default async function Inicio() {
@@ -42,7 +42,7 @@ export default async function Inicio() {
           <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-10 text-center md:flex-row md:justify-between md:text-left">
             <div className="grid gap-3">
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Compra por mayor y ahorra
+                Arma tu pedido y ahorra
               </h1>
               <p className="max-w-xl text-white/80">
                 Arma tu pedido desde el celular, envíalo por WhatsApp y paga

@@ -35,7 +35,7 @@ El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Est
 
 ## 3. Visión del producto
 
-> "Que un tendero de Calarcá pueda armar su pedido de la semana en 5 minutos desde el celular, sepa qué día le llega y cuánto se ahorra comprando por mayor."
+> "Que un tendero de Calarcá pueda armar su pedido de la semana en 5 minutos desde el celular, sepa qué día le llega y cuánto se ahorra al llegar al monto del descuento."
 
 **Principios:**
 1. **Celular primero.** Los clientes son tenderos y hogares que usan el teléfono.
@@ -72,7 +72,7 @@ El cliente pidió algo parecido a la tienda online de CEMPAC (sede Armenia). Est
 - **Importación masiva** de productos desde Excel/CSV, con vista previa y validación (carga inicial desde el catálogo PDF)
 - Gestión de pedidos por estados, con historial
 - Zonas: municipios, sectores y día de reparto
-- Configuración: WhatsApp, pedido mínimo, regla de precio por mayor, hora de corte y banners
+- Configuración: WhatsApp, pedido mínimo, descuento por monto, hora de corte y banners
 
 ### Fuera del MVP (fases siguientes)
 | Fase | Funcionalidad |
@@ -138,7 +138,7 @@ Logo de EV Distribuidora (círculo negro con aro dorado, "EV" en dorado y azul, 
 | # | Pregunta | Impacto |
 |---|---|---|
 | 1 | ¿Venden solo a negocios o también a clientes finales? | Textos, registro y validación de datos |
-| 2 | ¿El precio por mayor se activa **por cantidad del mismo producto** o **por el monto total del pedido**? | Lógica de precios. El sistema se diseña para soportar ambas y elegir en Configuración |
+| 2 | ~~¿El precio por mayor se activa por cantidad o por monto?~~ **Resuelta (nov-2026):** descuento del **5 %** en compras de **$500.000** o más, sobre todos los productos (RN-03). Ya no hay precio por mayor por producto | Lógica de precios. Configurable en el panel |
 | 3 | ¿Hay pedido mínimo? ¿De cuánto? | Checkout |
 | 4 | Listado de municipios y sectores, y qué día va el vendedor a cada uno | Tabla de zonas y fecha de entrega |
 | 5 | ¿Hora de corte para entrar en la ruta del día siguiente? | Cálculo de la fecha |

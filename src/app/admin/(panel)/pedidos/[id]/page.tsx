@@ -129,7 +129,7 @@ async function ContenidoPedido({ params }: { params: Props["params"] }) {
                 <dd className="text-right tabular-nums">{formatCOP(p.subtotal ?? 0)}</dd>
                 {(p.descuento_mayor ?? 0) > 0 ? (
                   <>
-                    <dt className="text-ev-azul">Ahorro por mayor</dt>
+                    <dt className="text-ev-azul">Descuento por compra</dt>
                     <dd className="text-right text-ev-azul tabular-nums">− {formatCOP(p.descuento_mayor ?? 0)}</dd>
                   </>
                 ) : null}

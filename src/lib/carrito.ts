@@ -98,8 +98,6 @@ export type ResultadoRevalidar = {
 
 const mismoPrecio = (a: VariantePrecio, b: VariantePrecio) =>
   a.precioUnidad === b.precioUnidad &&
-  a.precioMayor === b.precioMayor &&
-  a.cantidadMinMayor === b.cantidadMinMayor &&
   a.enOferta === b.enOferta &&
   a.precioOferta === b.precioOferta;
 
@@ -162,8 +160,6 @@ export function sanitizarItems(crudo: unknown): ItemCarrito[] {
       typeof i.productoSlug !== "string" ||
       !esEnteroPositivo(i.cantidad) ||
       !esEnteroPositivo(p.precioUnidad) ||
-      !esPrecioONulo(p.precioMayor) ||
-      !esPrecioONulo(p.cantidadMinMayor) ||
       !esPrecioONulo(p.precioOferta)
     ) {
       continue;
@@ -178,8 +174,6 @@ export function sanitizarItems(crudo: unknown): ItemCarrito[] {
       imagen: typeof i.imagen === "string" && i.imagen.startsWith("https://") ? i.imagen : null,
       precio: {
         precioUnidad: p.precioUnidad,
-        precioMayor: p.precioMayor as number | null,
-        cantidadMinMayor: p.cantidadMinMayor as number | null,
         enOferta: p.enOferta === true,
         precioOferta: p.precioOferta as number | null,
       },

@@ -128,7 +128,7 @@ export function ConfirmacionPedido({ numero }: { numero: string }) {
               <dd className="text-right tabular-nums">{formatCOP(pedido.subtotal)}</dd>
               {pedido.descuentoMayor > 0 ? (
                 <>
-                  <dt className="text-ev-azul">Ahorro por mayor</dt>
+                  <dt className="text-ev-azul">Descuento por tu compra</dt>
                   <dd className="text-right text-ev-azul tabular-nums">− {formatCOP(pedido.descuentoMayor)}</dd>
                 </>
               ) : null}

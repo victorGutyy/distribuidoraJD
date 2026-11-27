@@ -18,7 +18,7 @@ export type ItemPedidoVista = {
   subtotal: number;
 };
 
-const ETIQUETA_TIPO: Record<string, string> = { mayor: "por mayor", oferta: "oferta", unidad: "" };
+const ETIQUETA_TIPO: Record<string, string> = { mayor: "con descuento", oferta: "oferta", unidad: "" };
 
 /**
  * Lista de productos del pedido (RF-27, con el precio y nombre que tenían al pedir,

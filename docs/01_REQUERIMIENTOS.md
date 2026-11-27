@@ -14,7 +14,7 @@
 | **Contenido** | Cantidad neta: 460 g, 1 L, 15 tabletas |
 | **Unidad de venta** | Cómo se despacha: Individual, Paquete x12, Display x18, Caja x24 |
 | **Precio unidad** | Precio normal de la variante |
-| **Precio por mayor** | Precio rebajado que se aplica al cumplir la regla de mayoreo |
+| **Descuento por monto** | Porcentaje que se rebaja a cada producto cuando el subtotal de la compra llega al monto mínimo (hoy 5 % desde $500.000). Reemplaza al antiguo «precio por mayor» por producto |
 | **Sector** | Zona dentro de un municipio con un día fijo de reparto |
 | **Hora de corte** | Hora límite para que un pedido entre en la siguiente ruta |
 
@@ -23,7 +23,7 @@
 ## 2. Requerimientos funcionales — Tienda pública
 
 ### RF-01 Página de inicio · M
-- Barra superior con mensaje configurable (ej.: "Compra por mayor y ahorra")
+- Barra superior con mensaje configurable (ej.: "Compras desde $500.000: 5 % de descuento")
 - Encabezado con logo, buscador, carrito con contador y botón de WhatsApp
 - Carrusel de 1 a 5 banners administrables
 - Bloques: categorías principales (con ícono o imagen), "Ofertas" y "Nuevos"
@@ -40,7 +40,7 @@
 - Imagen principal (relación 1:1, carga diferida)
 - Etiquetas: **Oferta** (rojo), **Agotado** (gris), **Nuevo**
 - Nombre, marca y presentación por defecto
-- **Precio unidad** y, si existe, **"Por mayor: $X desde N und."** destacado en dorado
+- **Precio unidad** (y el de oferta, si hay). El descuento por monto se anuncia en la ficha y en el carrito, no en la tarjeta
 - Botón "Agregar". Si el producto tiene varias variantes, abre un selector rápido
 - Si está agotado, el botón queda deshabilitado
 
@@ -62,7 +62,7 @@ Panel lateral en escritorio y hoja inferior (drawer) en móvil:
 - Galería de imágenes
 - Nombre, marca, categoría y descripción
 - **Selector de presentación**: cada variante muestra contenido, unidad de venta y precios
-- Selector de cantidad con mensaje de mayoreo: "Lleva 12 o más y paga $X c/u"
+- Selector de cantidad con el aviso del descuento: "Compras desde $500.000: 5 % de descuento en todo tu pedido"
 - Ficha técnica: SKU, peso y dimensiones (si existen)
 - Sección "Productos relacionados" (misma subcategoría)
 
@@ -74,8 +74,8 @@ Panel lateral en escritorio y hoja inferior (drawer) en móvil:
 
 ### RF-08 Carrito · M
 - Panel lateral (drawer) y página `/carrito`
-- Lista de ítems con imagen, nombre, presentación, cantidad editable (+/-), precio aplicado (unidad o mayor) y subtotal
-- **Barra de resumen fija:** subtotal, ahorro por mayor, total y progreso hacia el pedido mínimo ("Te faltan $12.000 para el pedido mínimo")
+- Lista de ítems con imagen, nombre, presentación, cantidad editable (+/-), precio aplicado (normal, oferta o con descuento) y subtotal
+- **Barra de resumen fija:** subtotal, descuento por tu compra, total, progreso hacia el pedido mínimo ("Te faltan $12.000 para el pedido mínimo") y hacia el descuento ("Te faltan $X para el 5 % de descuento")
 - Se guarda en `localStorage` y sobrevive al recargar la página
 - Al abrir el carrito se revalidan los precios y la disponibilidad contra el servidor. Si algo cambió, se avisa al cliente
 
@@ -97,11 +97,11 @@ Cel: 3101234567
 Entrega: Calarcá – Barrio Centro · jueves 12/11
 Dirección: Cra 25 # 30-12
 
-1. Lentejas Doña Lupe 400 g x12 – $3.200 c/u = $38.400 (mayor)
+1. Lentejas Doña Lupe 400 g x12 – $3.200 c/u = $38.400 (desc.)
 2. Atún La Soberana 140 g x6 – $5.900 c/u = $35.400
 
 Subtotal: $78.900
-Ahorro por mayor: $4.800
+Descuento por compra: $4.800
 *Total: $74.100*
 Pago: contraentrega
 ```
@@ -144,7 +144,7 @@ Visible en toda la tienda, con un mensaje inicial configurable.
   - Contenido: valor + unidad (g, kg, ml, L, und, tabletas, cm, m)
   - Unidad de venta: Individual, Paquete, Display, Caja, Bolsa + unidades por empaque
   - Peso de envío (g) y dimensiones alto × ancho × largo (cm)
-  - **Precio unidad**, **precio por mayor**, **cantidad mínima para mayor**
+  - **Precio unidad** (el precio por mayor y su cantidad mínima ya no se editan; los valores viejos se conservan sin usarse)
   - En oferta sí/no + precio de oferta
   - Disponible sí/no (agotado)
   - Imagen propia (opcional) y orden
@@ -153,7 +153,7 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 - **Criterio:** se puede guardar un producto **sin precio**. Queda en estado "Borrador / sin precio" y no se muestra en la tienda
 
 ### RF-25 Edición rápida de precios · M
-- Vista tipo hoja de cálculo: una fila por variante, con columnas SKU, producto, presentación, precio unidad, precio mayor, cantidad mínima, oferta y disponible
+- Vista tipo hoja de cálculo: una fila por variante, con columnas SKU, producto, presentación, precio unidad, costo, oferta y disponible
 - Se edita directamente en la celda, se guarda por lotes y se resaltan los cambios sin guardar
 - Filtro "Solo sin precio" para la carga inicial de precios
 
@@ -189,7 +189,7 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 ### RF-30 Configuración · M
 - Número de WhatsApp de pedidos y mensaje del botón flotante
 - **Pedido mínimo** (COP)
-- **Regla de mayoreo:** `por_cantidad` (por variante) | `por_monto` (todo el pedido supera $X) | `ambas`
+- **Descuento por monto:** `descuento_monto_minimo` (pesos) y `descuento_porcentaje` (1 a 99); con cualquiera en 0 no hay descuento
 - Hora de corte y días no hábiles o festivos
 - Banners (imagen, enlace, orden y activo) y mensaje de la barra superior
 - Datos de la empresa: nombre, NIT, dirección, horarios y redes sociales
@@ -213,9 +213,9 @@ Visible en toda la tienda, con un mensaje inicial configurable.
 | ID | Regla |
 |---|---|
 | RN-01 | Un producto es visible si `activo = true`, su categoría está activa y tiene al menos 1 variante con `activo = true` y `precio_unidad > 0` |
-| RN-02 | **Mayoreo por cantidad:** si la cantidad de la variante es ≥ `cantidad_min_mayor` y existe `precio_mayor`, se usa `precio_mayor` |
-| RN-03 | **Mayoreo por monto:** si el subtotal a precio unidad es ≥ `umbral_mayor_monto`, todas las variantes con `precio_mayor` usan ese precio |
-| RN-04 | Si la variante está en oferta, se usa `precio_oferta`, salvo que el precio por mayor aplicable sea menor; siempre se aplica **el menor** |
+| RN-02 | *(Derogada nov-2026)* El mayoreo por cantidad de cada producto ya no existe. Las columnas `precio_mayor` y `cantidad_min_mayor` se conservan en `variantes` sin efecto |
+| RN-03 | **Descuento por monto:** si el subtotal de productos (a precio base, con las ofertas, sin envío) es ≥ `descuento_monto_minimo`, cada precio unitario baja `descuento_porcentaje` % y se redondea al peso más cercano. Cada línea queda con `tipo_precio = 'mayor'` y el ahorro se suma en `pedidos.descuento_mayor` |
+| RN-04 | Si la variante está en oferta, se usa `precio_oferta`, salvo que el precio con descuento (calculado sobre el precio normal) sea menor; siempre se aplica **el menor**: una oferta mejor que el descuento no se rebaja otra vez |
 | RN-05 | Los precios se guardan en **pesos enteros** (COP, sin decimales), en columnas `integer` |
 | RN-06 | El servidor recalcula todos los precios. Si difieren de lo que muestra el cliente, se usa el del servidor y se le avisa |
 | RN-07 | El número de pedido es consecutivo y único: `EV-` + secuencia de 6 dígitos |
@@ -260,7 +260,7 @@ pedidos           (id, numero UNIQUE, cliente_id → clientes, sector_id NULL, r
                    acepta_datos_at timestamptz NULL, version_politica text NULL (evidencia del consentimiento, Ley 1581; migración 0013),
                    created_at, updated_at)
 pedido_items      (id, pedido_id, variante_id NULL, sku, nombre_producto, presentacion,
-                   cantidad int, precio_unitario_aplicado int, precio_base int NULL (precio antes del mayoreo; permite recalcular el ahorro al editar cantidades, migración 0010),
+                   cantidad int, precio_unitario_aplicado int, precio_base int NULL (precio antes del descuento; permite recalcular el ahorro al editar cantidades, migración 0010),
                    tipo_precio ('unidad'|'mayor'|'oferta'), subtotal int)
 pedido_historial  (id, pedido_id, estado_anterior, estado_nuevo, usuario_id NULL, nota, created_at)
 
@@ -329,7 +329,7 @@ La matriz se implementa con **Row Level Security** en Supabase, más verificacio
 ## 8. Historias de usuario principales (con criterios de aceptación)
 
 **HU-01 — Pedir desde el celular.** *Como tendero, quiero armar mi pedido desde el celular para no esperar al vendedor.*
-- Dado que elegí "Calarcá – Centro", cuando agrego 12 lentejas de 400 g, veo el precio por mayor aplicado y la fecha de entrega
+- Dado que elegí "Calarcá – Centro", cuando mi compra llega a $500.000, veo el 5 % de descuento aplicado y la fecha de entrega
 - Cuando envío el pedido, recibo el número EV-XXXXXX y se abre WhatsApp con el resumen
 
 **HU-02 — Cargar el catálogo sin precios.** *Como administrador, quiero importar todo el catálogo y poner precios después.*

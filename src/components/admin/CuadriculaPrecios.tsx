@@ -24,9 +24,10 @@ import {
 import { formatCOP } from "@/lib/formato";
 import { parsearPesos } from "@/lib/numeros";
 
-// producto | unidad | mayor | mín. mayor | costo | ganancia | oferta | precio oferta | disp.
+// producto | unidad | costo | ganancia | oferta | precio oferta | disp.
+// (el precio por mayor ya no se edita: el descuento es por monto de compra, ver Configuración)
 const COLUMNAS =
-  "lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_minmax(0,1.3fr)_auto_minmax(0,1fr)_auto]";
+  "lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_minmax(0,1.3fr)_auto_minmax(0,1fr)_auto]";
 
 const CLASE_MARGEN: Record<EstadoMargen, string> = {
   sin_dato: "text-muted-foreground",
@@ -147,8 +148,6 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
       >
         <span>Producto</span>
         <span>Precio unidad</span>
-        <span>Precio mayor</span>
-        <span>Mín. mayor</span>
         <span>Costo</span>
         <span>Ganancia</span>
         <span>Oferta</span>
@@ -181,8 +180,6 @@ export function CuadriculaPrecios({ filas }: { filas: FilaPrecio[] }) {
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:contents">
                 {campoTexto(f.id, i, "precio_unidad", "Precio unidad", "$")}
-                {campoTexto(f.id, i, "precio_mayor", "Precio por mayor", "$")}
-                {campoTexto(f.id, i, "cantidad_min_mayor", "Mínimo por mayor", "Cant.")}
                 {campoTexto(f.id, i, "costo", "Costo", "$ costo")}
                 <p
                   className={`col-span-2 min-w-0 text-sm tabular-nums sm:col-span-3 lg:col-span-1 ${CLASE_MARGEN[ganancia.estado]}`}

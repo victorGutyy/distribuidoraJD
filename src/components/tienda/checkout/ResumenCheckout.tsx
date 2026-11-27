@@ -36,7 +36,7 @@ export function ResumenCheckout() {
                   <span className="block font-medium">{i.nombre}</span>
                   <span className="block text-xs text-muted-foreground">
                     {[i.presentacion, `x${i.cantidad}`].filter(Boolean).join(" · ")}
-                    {l?.tipo === "mayor" ? " · por mayor" : l?.tipo === "oferta" ? " · oferta" : ""}
+                    {l?.tipo === "mayor" ? " · con descuento" : l?.tipo === "oferta" ? " · oferta" : ""}
                   </span>
                 </span>
                 <span className="font-semibold tabular-nums">{l ? formatCOP(l.subtotal) : ""}</span>
@@ -53,7 +53,7 @@ export function ResumenCheckout() {
         <dd className="text-right tabular-nums">{formatCOP(r.calculo.subtotal)}</dd>
         {r.calculo.descuentoMayor > 0 ? (
           <>
-            <dt className="text-ev-azul">Ahorro por mayor</dt>
+            <dt className="text-ev-azul">Descuento por tu compra</dt>
             <dd className="text-right text-ev-azul tabular-nums">− {formatCOP(r.calculo.descuentoMayor)}</dd>
           </>
         ) : null}

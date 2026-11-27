@@ -105,7 +105,7 @@ export function FilaCarrito({ item, linea }: { item: ItemCarrito; linea: LineaCa
               <p className="text-sm font-bold tabular-nums">{formatCOP(linea.subtotal)}</p>
               <p className="text-xs text-muted-foreground tabular-nums">
                 {formatCOP(linea.precioUnitario)} c/u
-                {linea.tipo === "mayor" ? " · por mayor" : linea.tipo === "oferta" ? " · oferta" : ""}
+                {linea.tipo === "mayor" ? " · con descuento" : linea.tipo === "oferta" ? " · oferta" : ""}
               </p>
             </div>
           ) : null}

@@ -195,19 +195,12 @@ export function CamposVariante({
         })}
       </div>
 
-      <div className="grid gap-4 rounded-lg bg-muted/50 p-3 sm:grid-cols-3">
+      {/* El precio por mayor ya no se usa: el descuento es por monto de compra (Configuración). */}
+      <div className="grid gap-4 rounded-lg bg-muted/50 p-3">
         {campoTexto("precio_unidad", "Precio por unidad ($)", {
           numerico: true,
           placeholder: "3200",
           ayuda: "Sin precio, el producto no se ve en la tienda.",
-        })}
-        {campoTexto("precio_mayor", "Precio por mayor ($)", {
-          numerico: true,
-          placeholder: "3000",
-        })}
-        {campoTexto("cantidad_min_mayor", "Por mayor desde (und.)", {
-          numerico: true,
-          placeholder: "12",
         })}
       </div>
 

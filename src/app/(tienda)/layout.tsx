@@ -34,7 +34,7 @@ export default async function LayoutTienda({ children }: LayoutProps<"/">) {
   return (
     <ProveedorTienda
       valor={{
-        precios: { regla: config.reglaMayoreo, umbralMonto: config.umbralMayorMonto },
+        precios: { montoMinimo: config.descuentoMonto, porcentaje: config.descuentoPorcentaje },
         entrega: {
           horaCorte: config.horaCorte,
           diasNoHabiles: config.diasNoHabiles,

@@ -86,7 +86,7 @@ export async function crearPedido(entrada: CheckoutEntrada): Promise<ResultadoPe
   const calculo = calcularCarrito(
     d.items,
     new Map([...vigentes].map(([id, v]) => [id, (v as NonNullable<typeof v>).datos.precio])),
-    { regla: config.reglaMayoreo, umbralMonto: config.umbralMayorMonto },
+    { montoMinimo: config.descuentoMonto, porcentaje: config.descuentoPorcentaje },
   );
 
   // Zona de entrega (fresca, no de la caché) y fecha.

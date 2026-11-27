@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
   title: "EV Distribuidora",
   description:
-    "Catálogo de EV Distribuidora: arma tu pedido por mayor y envíalo por WhatsApp.",
+    "Catálogo de EV Distribuidora: arma tu pedido y envíalo por WhatsApp.",
   applicationName: "EV Distribuidora",
   openGraph: {
     siteName: "EV Distribuidora",

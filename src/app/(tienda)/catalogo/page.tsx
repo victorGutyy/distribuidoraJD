@@ -19,7 +19,7 @@ import {
 import { enlaceWhatsApp } from "@/lib/whatsapp";
 
 const DESCRIPCION_CATALOGO =
-  "Catálogo de EV Distribuidora: víveres, aseo, útiles escolares y más, al por mayor y al detal.";
+  "Catálogo de EV Distribuidora: víveres, aseo, útiles escolares y más, con descuento en compras grandes.";
 
 /** Título y dirección canónica según la categoría elegida (cada categoría es una página indexable). */
 export async function generateMetadata({ searchParams }: PageProps<"/catalogo">): Promise<Metadata> {
@@ -28,7 +28,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/catalogo">)
   if (!actual) return { title: "Catálogo", description: DESCRIPCION_CATALOGO, alternates: { canonical: "/catalogo" } };
   return {
     title: actual.nombre,
-    description: `${actual.nombre} al por mayor y al detal en EV Distribuidora. Arma tu pedido y envíalo por WhatsApp.`,
+    description: `${actual.nombre} en EV Distribuidora. Arma tu pedido y envíalo por WhatsApp.`,
     alternates: { canonical: `/catalogo?cat=${encodeURIComponent(actual.slug)}` },
   };
 }

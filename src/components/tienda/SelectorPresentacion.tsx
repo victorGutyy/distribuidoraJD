@@ -4,9 +4,10 @@ import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { formatCOP } from "@/lib/formato";
 import { BotonAgregar } from "@/components/tienda/carrito/BotonAgregar";
+import { useTienda } from "@/components/tienda/carrito/ProveedorTienda";
+import { textoDescuento } from "@/lib/precios";
 import {
   aDatosItem,
-  mensajeMayoreo,
   precioMostrado,
   type PresentacionVista,
 } from "@/lib/tienda/producto";
@@ -16,7 +17,7 @@ const MAX_CANTIDAD = 9999;
 
 /**
  * Selector de presentación y cantidad (RF-06). Muestra el precio según la
- * cantidad y el mensaje de mayoreo, y agrega al carrito la presentación elegida.
+ * cantidad y el aviso del descuento por monto, y agrega al carrito la presentación elegida.
  * La ficha técnica sigue a la presentación elegida.
  */
 export function SelectorPresentacion({
@@ -28,11 +29,12 @@ export function SelectorPresentacion({
 }) {
   const [indice, setIndice] = useState(0);
   const [cantidad, setCantidad] = useState(1);
+  const { precios } = useTienda();
   const p = presentaciones[indice];
   if (!p) return null;
 
-  const precio = precioMostrado(p, cantidad);
-  const mayoreo = mensajeMayoreo(p, cantidad, formatCOP);
+  const precio = precioMostrado(p);
+  const descuento = textoDescuento(precios, formatCOP);
   const ajustar = (n: number) => setCantidad(Math.min(MAX_CANTIDAD, Math.max(1, Math.floor(n) || 1)));
 
   return (
@@ -85,16 +87,7 @@ export function SelectorPresentacion({
         {precio.tipo === "oferta" ? (
           <p className="text-sm font-semibold text-ev-oferta">Precio de oferta</p>
         ) : null}
-        {mayoreo ? (
-          <p
-            className={cn(
-              "text-sm font-semibold",
-              mayoreo.aplicado ? "text-ev-azul" : "text-ev-dorado-oscuro",
-            )}
-          >
-            {mayoreo.texto}
-          </p>
-        ) : null}
+        {descuento ? <p className="text-sm font-semibold text-ev-azul">{descuento} en todo tu pedido</p> : null}
       </div>
 
       <div className="flex flex-wrap items-end gap-3">

@@ -4,8 +4,8 @@ import type { Tables } from "@/types/database.types";
 /**
  * Datos de una presentación listos para pintar en el detalle de producto
  * (RF-06). Lógica PURA, con pruebas. Aquí solo se MUESTRAN los precios
- * guardados y se explica la regla de mayoreo; lo que realmente se cobra lo
- * calcula el servidor en la fase F5 (RN-02 a RN-06).
+ * guardados; lo que realmente se cobra (ofertas y descuento por monto) lo calcula
+ * lib/precios.ts, en el carrito y en el servidor (RN-02 a RN-06).
  */
 
 export type VarianteDetalle = Pick<
@@ -22,8 +22,6 @@ export type VarianteDetalle = Pick<
   | "ancho_cm"
   | "largo_cm"
   | "precio_unidad"
-  | "precio_mayor"
-  | "cantidad_min_mayor"
   | "en_oferta"
   | "precio_oferta"
   | "disponible"
@@ -40,7 +38,6 @@ export type PresentacionVista = {
   precioUnidad: number;
   /** Precio de oferta, si la oferta está activa y es menor al normal. */
   precioOferta: number | null;
-  mayor: { precio: number; desde: number | null } | null;
   disponible: boolean;
   peso: string | null;
   medidas: string | null;
@@ -105,10 +102,6 @@ export function aPresentacion(v: VarianteDetalle): PresentacionVista | null {
     v.precio_oferta < v.precio_unidad
       ? v.precio_oferta
       : null;
-  const mayor =
-    v.precio_mayor !== null && v.precio_mayor > 0 && v.precio_mayor < v.precio_unidad
-      ? { precio: v.precio_mayor, desde: v.cantidad_min_mayor }
-      : null;
   return {
     id: v.id,
     sku: v.sku,
@@ -116,7 +109,6 @@ export function aPresentacion(v: VarianteDetalle): PresentacionVista | null {
     venta: etiquetaVenta(v.unidad_venta, v.unidades_por_empaque),
     precioUnidad: v.precio_unidad,
     precioOferta: oferta,
-    mayor,
     disponible: v.disponible,
     peso: formatoPeso(v.peso_g),
     medidas: formatoMedidas(v.alto_cm, v.ancho_cm, v.largo_cm),
@@ -125,43 +117,17 @@ export function aPresentacion(v: VarianteDetalle): PresentacionVista | null {
 
 export type PrecioMostrado = {
   precio: number;
-  tipo: "unidad" | "oferta" | "mayor";
+  tipo: "unidad" | "oferta";
 };
 
 /**
- * Precio que se muestra para una cantidad: el menor entre el normal, la oferta y
- * el de mayor (si se llega a la cantidad mínima). Es solo informativo (RN-04).
+ * Precio que se muestra para una presentación: el de oferta si la hay, si no el normal.
+ * El descuento por monto de la compra (lib/precios.ts) se aplica en el carrito, no aquí.
  */
-export function precioMostrado(p: PresentacionVista, cantidad: number): PrecioMostrado {
-  let mejor: PrecioMostrado = { precio: p.precioUnidad, tipo: "unidad" };
-  if (p.precioOferta !== null && p.precioOferta < mejor.precio) {
-    mejor = { precio: p.precioOferta, tipo: "oferta" };
-  }
-  if (p.mayor && cantidad >= (p.mayor.desde ?? 1) && p.mayor.precio < mejor.precio) {
-    mejor = { precio: p.mayor.precio, tipo: "mayor" };
-  }
-  return mejor;
-}
-
-/**
- * Mensaje de mayoreo para la cantidad elegida (RF-06):
- *   "Lleva 12 o más y paga $ 3.000 c/u"  → todavía no llega
- *   "Precio por mayor aplicado: $ 3.000 c/u" → ya lo alcanzó
- * Null si no tiene precio por mayor, o si la oferta ya es igual o más barata
- * (RN-04: siempre se aplica el menor, así que el mensaje confundiría).
- */
-export function mensajeMayoreo(
-  p: PresentacionVista,
-  cantidad: number,
-  formatoPesos: (n: number) => string,
-): { texto: string; aplicado: boolean } | null {
-  if (!p.mayor) return null;
-  if (p.precioOferta !== null && p.precioOferta <= p.mayor.precio) return null;
-  const desde = p.mayor.desde ?? 1;
-  const aplicado = cantidad >= desde;
-  return aplicado
-    ? { texto: `Precio por mayor aplicado: ${formatoPesos(p.mayor.precio)} c/u`, aplicado }
-    : { texto: `Lleva ${desde} o más y paga ${formatoPesos(p.mayor.precio)} c/u`, aplicado };
+export function precioMostrado(p: PresentacionVista): PrecioMostrado {
+  return p.precioOferta !== null && p.precioOferta < p.precioUnidad
+    ? { precio: p.precioOferta, tipo: "oferta" }
+    : { precio: p.precioUnidad, tipo: "unidad" };
 }
 
 /** Descripción corta para los buscadores y al compartir el enlace (máx. ~155 caracteres). */
@@ -172,7 +138,7 @@ export function descripcionMeta(
 ): string {
   const texto = descripcion?.replace(/\s+/g, " ").trim();
   if (texto) return texto.length > 155 ? `${texto.slice(0, 152).trimEnd()}…` : texto;
-  return `${nombre}${marca ? ` de ${marca}` : ""}: compra por mayor y al detal en EV Distribuidora y paga contraentrega.`;
+  return `${nombre}${marca ? ` de ${marca}` : ""}: compra en EV Distribuidora y paga contraentrega.`;
 }
 
 /** Datos estructurados (schema.org/Product) para los buscadores. */
@@ -219,8 +185,6 @@ export function aDatosItem(
     imagen: producto.imagen,
     precio: {
       precioUnidad: p.precioUnidad,
-      precioMayor: p.mayor?.precio ?? null,
-      cantidadMinMayor: p.mayor?.desde ?? null,
       enOferta: p.precioOferta !== null,
       precioOferta: p.precioOferta,
     },

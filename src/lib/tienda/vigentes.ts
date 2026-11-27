@@ -15,8 +15,8 @@ import { etiquetaPresentacion, type VarianteDetalle } from "@/lib/tienda/product
 
 const COLUMNAS =
   "id, producto_id, sku, nombre_presentacion, contenido_valor, contenido_unidad, unidad_venta, " +
-  "unidades_por_empaque, peso_g, alto_cm, ancho_cm, largo_cm, precio_unidad, precio_mayor, " +
-  "cantidad_min_mayor, en_oferta, precio_oferta, disponible";
+  "unidades_por_empaque, peso_g, alto_cm, ancho_cm, largo_cm, precio_unidad, " +
+  "en_oferta, precio_oferta, disponible";
 
 type FilaVariante = VarianteDetalle & { producto_id: number };
 
@@ -68,8 +68,6 @@ export async function leerVigentes(ids: readonly number[]): Promise<Map<number, 
         imagen: imagenDe.get(v.producto_id) ?? null,
         precio: {
           precioUnidad: v.precio_unidad,
-          precioMayor: v.precio_mayor,
-          cantidadMinMayor: v.cantidad_min_mayor,
           enOferta: v.en_oferta,
           precioOferta: v.precio_oferta,
         },

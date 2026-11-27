@@ -15,12 +15,12 @@ describe("valoresConfigFormulario", () => {
     const v = valoresConfigFormulario([
       { clave: "whatsapp_pedidos", valor: null },
       { clave: "pedido_minimo", valor: 0 },
-      { clave: "regla_mayoreo", valor: "por_cantidad" },
+      { clave: "descuento_monto_minimo", valor: 0 },
       { clave: "hora_corte", valor: null },
       { clave: "dias_no_habiles", valor: [] },
       { clave: "empresa", valor: { nit: null, redes: {}, nombre: "EV Distribuidora", horarios: null, direccion: null } },
     ]);
-    expect(v).toMatchObject({ whatsapp: "", pedido_minimo: "0", regla_mayoreo: "por_cantidad", hora_corte: "17:00", dias_no_habiles: "" });
+    expect(v).toMatchObject({ whatsapp: "", pedido_minimo: "0", descuento_monto_minimo: "0", descuento_porcentaje: "0", hora_corte: "17:00", dias_no_habiles: "" });
     expect(v.empresa.nombre).toBe("EV Distribuidora");
   });
 
@@ -28,11 +28,12 @@ describe("valoresConfigFormulario", () => {
     const v = valoresConfigFormulario([
       { clave: "whatsapp_pedidos", valor: "573101234567" },
       { clave: "dias_no_habiles", valor: ["2026-12-25", "2026-12-08", 5] },
-      { clave: "regla_mayoreo", valor: "ambas" },
+      { clave: "descuento_monto_minimo", valor: 500000 },
+      { clave: "descuento_porcentaje", valor: 5 },
     ]);
     expect(v.whatsapp).toBe("3101234567");
     expect(v.dias_no_habiles).toBe("2026-12-25\n2026-12-08");
-    expect(v.regla_mayoreo).toBe("ambas");
+    expect(v).toMatchObject({ descuento_monto_minimo: "500000", descuento_porcentaje: "5" });
   });
 
   it("un valor vacío se guarda como texto vacío, no como null", () => {
@@ -55,20 +56,29 @@ describe("contactoSchema", () => {
 });
 
 describe("comprasSchema", () => {
-  it("convierte pesos y acepta vacío como 0", () => {
-    const r = comprasSchema.safeParse({ pedido_minimo: "50.000", regla_mayoreo: "por_cantidad", umbral_mayor_monto: "" });
-    expect(r.success && r.data).toEqual({ pedido_minimo: 50000, regla_mayoreo: "por_cantidad", umbral_mayor_monto: 0 });
+  const base = { pedido_minimo: "", descuento_monto_minimo: "", descuento_porcentaje: "" };
+
+  it("convierte pesos y acepta vacío como 0 (sin descuento)", () => {
+    const r = comprasSchema.safeParse({ ...base, pedido_minimo: "50.000" });
+    expect(r.success && r.data).toEqual({ pedido_minimo: 50000, descuento_monto_minimo: 0, descuento_porcentaje: 0 });
   });
 
-  it("por monto o ambas exigen el monto", () => {
-    expect(comprasSchema.safeParse({ pedido_minimo: "", regla_mayoreo: "por_monto", umbral_mayor_monto: "" }).success).toBe(false);
-    expect(comprasSchema.safeParse({ pedido_minimo: "", regla_mayoreo: "ambas", umbral_mayor_monto: "0" }).success).toBe(false);
-    expect(comprasSchema.safeParse({ pedido_minimo: "", regla_mayoreo: "ambas", umbral_mayor_monto: "200000" }).success).toBe(true);
+  it("acepta el descuento completo: 5 % desde 500.000", () => {
+    const r = comprasSchema.safeParse({ ...base, descuento_monto_minimo: "500.000", descuento_porcentaje: "5" });
+    expect(r.success && r.data).toEqual({ pedido_minimo: 0, descuento_monto_minimo: 500000, descuento_porcentaje: 5 });
   });
 
-  it("rechaza decimales y reglas desconocidas", () => {
-    expect(comprasSchema.safeParse({ pedido_minimo: "12,5", regla_mayoreo: "por_cantidad", umbral_mayor_monto: "" }).success).toBe(false);
-    expect(comprasSchema.safeParse({ pedido_minimo: "", regla_mayoreo: "otra", umbral_mayor_monto: "" }).success).toBe(false);
+  it("el monto y el porcentaje van juntos: uno solo no sirve", () => {
+    expect(comprasSchema.safeParse({ ...base, descuento_monto_minimo: "500000" }).success).toBe(false);
+    expect(comprasSchema.safeParse({ ...base, descuento_porcentaje: "5" }).success).toBe(false);
+    expect(comprasSchema.safeParse({ ...base, descuento_monto_minimo: "0", descuento_porcentaje: "0" }).success).toBe(true);
+  });
+
+  it("rechaza decimales, porcentajes de 100 o más y textos", () => {
+    expect(comprasSchema.safeParse({ ...base, pedido_minimo: "12,5" }).success).toBe(false);
+    expect(comprasSchema.safeParse({ ...base, descuento_monto_minimo: "1000", descuento_porcentaje: "100" }).success).toBe(false);
+    expect(comprasSchema.safeParse({ ...base, descuento_monto_minimo: "1000", descuento_porcentaje: "5,5" }).success).toBe(false);
+    expect(comprasSchema.safeParse({ ...base, descuento_monto_minimo: "1000", descuento_porcentaje: "cinco" }).success).toBe(false);
   });
 });
 

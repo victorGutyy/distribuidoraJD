@@ -64,10 +64,10 @@ export async function guardarContacto(_previo: EstadoFormulario, formData: FormD
 }
 
 export async function guardarCompras(_previo: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
-  return guardarGrupo(formData, ["pedido_minimo", "regla_mayoreo", "umbral_mayor_monto"], comprasSchema, (d) => ({
+  return guardarGrupo(formData, ["pedido_minimo", "descuento_monto_minimo", "descuento_porcentaje"], comprasSchema, (d) => ({
     pedido_minimo: d.pedido_minimo,
-    regla_mayoreo: d.regla_mayoreo,
-    umbral_mayor_monto: d.umbral_mayor_monto,
+    descuento_monto_minimo: d.descuento_monto_minimo,
+    descuento_porcentaje: d.descuento_porcentaje,
   }));
 }
 
